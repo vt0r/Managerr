@@ -33,9 +33,15 @@ You can use the app with any combination of the above services — just enable t
 
 ### Service URLs
 
-Enter the full URL including protocol and port, for example:
+Enter the full URL including protocol and port (unless it's port `80` or `443`), for example:
 
-``` txt
+``` bash
+# HTTPS: if your instance of Radarr lives behind a proxy/LB bound to port 443
+https://radarr.example.com
+https://yourreverseproxy.example.com/radarr
+https://192.168.1.10/radarr
+
+# Regular HTTP (no TLS): connecting by IP on Radarr's default port (7878)
 http://192.168.1.10:7878
 ```
 
