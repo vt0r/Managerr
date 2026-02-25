@@ -17,7 +17,7 @@ struct ManagerrApp: App {
             }
             .task {
                 try? await Task.sleep(for: .seconds(1))
-                withAnimation(.easeOut(duration: 0.3)) {
+                withAnimation(UIAccessibility.isReduceMotionEnabled ? nil : .easeOut(duration: 0.3)) {
                     showSplash = false
                 }
             }

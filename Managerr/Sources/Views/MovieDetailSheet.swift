@@ -42,6 +42,8 @@ struct MovieDetailSheet: View {
                         } label: {
                             Image(systemName: localMonitored ? "eye.fill" : "eye.slash")
                         }
+                        .accessibilityLabel(localMonitored ? "Monitored" : "Not monitored")
+                        .accessibilityHint("Toggles monitoring for this movie")
 
                         Button("Done") { dismiss() }
                     }
@@ -72,6 +74,7 @@ struct MovieDetailSheet: View {
                 if let url = movie.fanartURL(baseURL: baseURL) {
                     CachedAsyncImage(url: url)
                         .allowsHitTesting(false)
+                        .accessibilityHidden(true)
                 }
             }
             .clipShape(.rect(cornerRadius: 0))
@@ -95,6 +98,7 @@ struct MovieDetailSheet: View {
                         }
                         .clipShape(.rect(cornerRadius: 8))
                         .shadow(radius: 4)
+                        .accessibilityHidden(true)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(movie.title)

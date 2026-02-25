@@ -29,11 +29,11 @@ struct CachedAsyncImage: View {
                 return
             }
             if let loaded = await ImageLoader.shared.image(for: url) {
-                withAnimation(.easeIn(duration: 0.15)) { image = loaded }
+                withAnimation(UIAccessibility.isReduceMotionEnabled ? nil : .easeIn(duration: 0.15)) { image = loaded }
                 return
             }
             if let fallbackURL, let loaded = await ImageLoader.shared.image(for: fallbackURL) {
-                withAnimation(.easeIn(duration: 0.15)) { image = loaded }
+                withAnimation(UIAccessibility.isReduceMotionEnabled ? nil : .easeIn(duration: 0.15)) { image = loaded }
                 return
             }
             hasFailed = true

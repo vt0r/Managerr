@@ -8,6 +8,8 @@ struct PosterGridView: View {
     let isMonitored: Bool
     var fallbackImageURL: URL? = nil
 
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Color(.secondarySystemBackground)
@@ -27,6 +29,7 @@ struct PosterGridView: View {
                             .font(.caption2.weight(.bold))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
+                            .background(reduceTransparency ? Color(.secondarySystemBackground) : Color.clear, in: Capsule())
                             .background(.ultraThinMaterial, in: Capsule())
                             .padding(6)
                     }
@@ -36,6 +39,7 @@ struct PosterGridView: View {
                         Image(systemName: "eye.slash.fill")
                             .font(.caption2)
                             .padding(5)
+                            .background(reduceTransparency ? Color(.secondarySystemBackground) : Color.clear, in: Circle())
                             .background(.ultraThinMaterial, in: Circle())
                             .padding(6)
                     }
@@ -60,6 +64,16 @@ struct PosterGridView: View {
             }
             .frame(height: 38, alignment: .top)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityDescription)
+    }
+
+    private var accessibilityDescription: String {
+        var parts = [title]
+        if let subtitle, !subtitle.isEmpty { parts.append(subtitle) }
+        if let badge { parts.append(badge) }
+        if !isMonitored { parts.append("Not monitored") }
+        return parts.joined(separator: ", ")
     }
 
     private var posterPlaceholder: some View {

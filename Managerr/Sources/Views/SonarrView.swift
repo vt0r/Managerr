@@ -37,6 +37,7 @@ struct SonarrView: View {
                     } label: {
                         Image(systemName: "arrow.up.arrow.down")
                     }
+                    .accessibilityLabel("Sort")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -44,6 +45,7 @@ struct SonarrView: View {
                     } label: {
                         Image(systemName: "arrow.clockwise")
                     }
+                    .accessibilityLabel("Refresh")
                 }
             }
             .refreshable {

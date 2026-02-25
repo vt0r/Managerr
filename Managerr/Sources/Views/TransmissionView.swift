@@ -35,6 +35,7 @@ struct TransmissionView: View {
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease.circle")
                     }
+                    .accessibilityLabel("Filter")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -42,6 +43,7 @@ struct TransmissionView: View {
                     } label: {
                         Image(systemName: "plus")
                     }
+                    .accessibilityLabel("Add Torrent")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -58,6 +60,7 @@ struct TransmissionView: View {
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
+                    .accessibilityLabel("Actions")
                 }
             }
             .refreshable {
@@ -226,6 +229,7 @@ struct TorrentRow: View {
                 .buttonStyle(.plain)
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
+                .accessibilityLabel(torrent.status == 0 ? "Start" : "Pause")
             }
 
             HStack {

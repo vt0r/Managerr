@@ -169,6 +169,8 @@ struct AlbumDetailSheet: View {
                             } label: {
                                 Image(systemName: localMonitored ? "eye.fill" : "eye.slash")
                             }
+                            .accessibilityLabel(localMonitored ? "Monitored" : "Not monitored")
+                            .accessibilityHint("Toggles monitoring for this album")
                         }
 
                         Button("Done") { dismiss() }

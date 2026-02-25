@@ -55,6 +55,8 @@ struct SeriesDetailSheet: View {
                         } label: {
                             Image(systemName: localMonitored ? "eye.fill" : "eye.slash")
                         }
+                        .accessibilityLabel(localMonitored ? "Monitored" : "Not monitored")
+                        .accessibilityHint("Toggles monitoring for this series")
 
                         Button("Done") { dismiss() }
                     }

@@ -45,6 +45,8 @@ struct ArtistDetailSheet: View {
                         } label: {
                             Image(systemName: localMonitored ? "eye.fill" : "eye.slash")
                         }
+                        .accessibilityLabel(localMonitored ? "Monitored" : "Not monitored")
+                        .accessibilityHint("Toggles monitoring for this artist")
 
                         Button("Done") { dismiss() }
                     }

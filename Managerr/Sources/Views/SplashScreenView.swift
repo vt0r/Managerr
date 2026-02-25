@@ -2,13 +2,11 @@ import SwiftUI
 
 struct SplashScreenView: View {
     var body: some View {
-        Color("SplashBackground")
-            .ignoresSafeArea()
-            .overlay {
-                Image("SplashImage")
-                    .resizable()
-                    .scaledToFit()
-                    .padding(73)
-            }
+        ZStack {
+            Color("SplashBackground")
+                .ignoresSafeArea()
+            Image("SplashImage")
+                .accessibilityHidden(true)
+        }
     }
 }

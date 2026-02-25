@@ -190,6 +190,8 @@ struct ManualSearchView: View {
                     .foregroundStyle(release.isRejected ? .orange : .accentColor)
             }
         }
+        .accessibilityLabel("Download release")
+        .frame(minWidth: 44, minHeight: 44)
         .disabled(grabbingGuid != nil)
     }
 }
