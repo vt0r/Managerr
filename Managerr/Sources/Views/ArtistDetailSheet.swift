@@ -207,49 +207,52 @@ struct ArtistDetailSheet: View {
     }
 
     private func albumRow(_ album: LidarrAlbum) -> some View {
-        HStack(spacing: 12) {
-            Circle()
-                .fill(album.monitored ? Color.accentColor : Color(.tertiaryLabel))
-                .frame(width: 6, height: 6)
+        Button { selectedAlbum = album } label: {
+            HStack(spacing: 12) {
+                Circle()
+                    .fill(album.monitored ? Color.accentColor : Color(.tertiaryLabel))
+                    .frame(width: 6, height: 6)
 
-            Color(.secondarySystemBackground)
-                .frame(width: 50, height: 50)
-                .overlay {
-                    if let url = album.coverURL(config: lidarrConfig) {
-                        CachedAsyncImage(url: url)
-                            .allowsHitTesting(false)
+                Color(.secondarySystemBackground)
+                    .frame(width: 50, height: 50)
+                    .overlay {
+                        if let url = album.coverURL(config: lidarrConfig) {
+                            CachedAsyncImage(url: url)
+                                .allowsHitTesting(false)
+                        }
+                    }
+                    .clipShape(.rect(cornerRadius: 6))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(album.title ?? "Unknown Album")
+                        .font(.subheadline.weight(.medium))
+                        .lineLimit(1)
+                    if let date = album.releaseDate {
+                        Text(String(date.prefix(4)))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
-                .clipShape(.rect(cornerRadius: 6))
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(album.title ?? "Unknown Album")
-                    .font(.subheadline.weight(.medium))
-                    .lineLimit(1)
-                if let date = album.releaseDate {
-                    Text(String(date.prefix(4)))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                Spacer()
+
+                if let stats = album.statistics,
+                   let fileCount = stats.trackFileCount,
+                   let totalCount = stats.totalTrackCount {
+                    Text("\(fileCount)/\(totalCount)")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(fileCount >= totalCount && totalCount > 0 ? .green : .secondary)
                 }
+
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
-
-            Spacer()
-
-            if let stats = album.statistics,
-               let fileCount = stats.trackFileCount,
-               let totalCount = stats.totalTrackCount {
-                Text("\(fileCount)/\(totalCount)")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(fileCount >= totalCount && totalCount > 0 ? .green : .secondary)
-            }
-
-            Image(systemName: "chevron.right")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .contentShape(Rectangle())
-        .onTapGesture { selectedAlbum = album }
+        .buttonStyle(.plain)
+        .accessibilityLabel(album.title ?? "Unknown Album")
     }
 }

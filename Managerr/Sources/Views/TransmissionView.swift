@@ -117,64 +117,66 @@ struct TransmissionView: View {
                 ContentUnavailableView("No Torrents", systemImage: "arrow.down.circle")
             } else {
                 ForEach(viewModel.filteredTorrents) { torrent in
-                    Button {
-                        selectedTorrent = torrent
-                    } label: {
-                        TorrentRow(torrent: torrent, onToggle: {
-                            Task {
-                                if torrent.status == 0 {
-                                    await viewModel.startTorrent(settings.config(for: .transmission), id: torrent.id)
-                                } else {
-                                    await viewModel.stopTorrent(settings.config(for: .transmission), id: torrent.id)
-                                }
-                            }
-                        })
-                    }
-                    .tint(.primary)
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            Task {
-                                await viewModel.removeTorrent(
-                                    settings.config(for: .transmission),
-                                    id: torrent.id,
-                                    deleteData: false
-                                )
-                            }
-                        } label: {
-                            Label("Remove", systemImage: "trash")
-                        }
-                    }
-                    .swipeActions(edge: .leading) {
-                        if torrent.status == 0 {
-                            Button {
-                                Task {
-                                    await viewModel.startTorrent(
-                                        settings.config(for: .transmission),
-                                        id: torrent.id
-                                    )
-                                }
-                            } label: {
-                                Label("Start", systemImage: "play.fill")
-                            }
-                            .tint(.green)
-                        } else if torrent.isActive {
-                            Button {
-                                Task {
-                                    await viewModel.stopTorrent(
-                                        settings.config(for: .transmission),
-                                        id: torrent.id
-                                    )
-                                }
-                            } label: {
-                                Label("Stop", systemImage: "stop.fill")
-                            }
-                            .tint(.orange)
-                        }
-                    }
+                    torrentCell(torrent)
                 }
             }
         }
         .listStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func torrentCell(_ torrent: TransmissionTorrent) -> some View {
+        let config = settings.config(for: .transmission)
+        Button { selectedTorrent = torrent } label: {
+            TorrentRow(torrent: torrent, onToggle: {
+                Task {
+                    if torrent.status == 0 {
+                        await viewModel.startTorrent(config, id: torrent.id)
+                    } else {
+                        await viewModel.stopTorrent(config, id: torrent.id)
+                    }
+                }
+            })
+        }
+        .tint(.primary)
+        .accessibilityLabel(torrent.name ?? "Unknown torrent")
+        .accessibilityValue(torrent.statusText)
+        .accessibilityAction(named: "Remove") {
+            Task { await viewModel.removeTorrent(config, id: torrent.id, deleteData: false) }
+        }
+        .accessibilityAction(named: torrent.status == 0 ? "Start" : "Stop") {
+            Task {
+                if torrent.status == 0 {
+                    await viewModel.startTorrent(config, id: torrent.id)
+                } else {
+                    await viewModel.stopTorrent(config, id: torrent.id)
+                }
+            }
+        }
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                Task { await viewModel.removeTorrent(config, id: torrent.id, deleteData: false) }
+            } label: {
+                Label("Remove", systemImage: "trash")
+            }
+        }
+        .swipeActions(edge: .leading) {
+            if torrent.status == 0 {
+                Button {
+                    Task { await viewModel.startTorrent(config, id: torrent.id) }
+                } label: {
+                    Label("Start", systemImage: "play.fill")
+                }
+                .tint(.green)
+            } else if torrent.isActive {
+                Button {
+                    Task { await viewModel.stopTorrent(config, id: torrent.id) }
+                } label: {
+                    Label("Stop", systemImage: "stop.fill")
+                }
+                .tint(.orange)
+            }
+        }
     }
 
     private var notConfiguredView: some View {

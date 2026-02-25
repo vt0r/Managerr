@@ -66,6 +66,7 @@ struct PosterGridView: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityDescription)
+        .accessibilityAddTraits(.isButton)
     }
 
     private var accessibilityDescription: String {
