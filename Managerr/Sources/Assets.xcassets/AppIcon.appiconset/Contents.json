@@ -1,0 +1,14 @@
+{
+  "images" : [
+    {
+      "filename" : "Manny_less_small_iOS_icon_scaled.png",
+      "idiom" : "universal",
+      "platform" : "ios",
+      "size" : "1024x1024"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "images" : [
+    {
+      "filename" : "Manny_square_splash_screen_transparent.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "Manny_square_splash_screen_transparent.png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "Manny_square_splash_screen_transparent.png",
+      "idiom" : "universal",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
