@@ -66,10 +66,10 @@ final class TransmissionViewModel {
         }
     }
 
-    func fetchTorrentDetail(_ config: ServerConfig, id: Int) async {
+    func fetchTorrentDetail(_ config: ServerConfig, id: Int, showFlags: Bool = true) async {
         do {
             detailedTorrent = try await TransmissionService.shared.fetchTorrentDetail(config, id: id)
-            if let peers = detailedTorrent?.peers {
+            if showFlags, let peers = detailedTorrent?.peers {
                 await lookupPeerCountries(peers)
             }
         } catch {

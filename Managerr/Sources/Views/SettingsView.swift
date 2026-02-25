@@ -104,6 +104,7 @@ struct ServiceConfigSheet: View {
     @State private var url: String
     @State private var apiKey: String
     @State private var isEnabled: Bool
+    @State private var showPeerFlags: Bool
     @State private var isTesting: Bool = false
     @State private var testResult: String?
 
@@ -112,6 +113,7 @@ struct ServiceConfigSheet: View {
         _url = State(initialValue: config.url)
         _apiKey = State(initialValue: config.apiKey)
         _isEnabled = State(initialValue: config.isEnabled)
+        _showPeerFlags = State(initialValue: UserDefaults.standard.object(forKey: "showPeerFlags") as? Bool ?? true)
     }
 
     var body: some View {
@@ -157,6 +159,14 @@ struct ServiceConfigSheet: View {
                     }
                 }
 
+                if config.serviceType == .transmission {
+                    Section {
+                        Toggle("Show Peer Country Flags", isOn: $showPeerFlags)
+                    } footer: {
+                        Text("Looks up the country for each torrent peer IP using the free [`country.is`](https://country.is/) service, then shows a flag. Requires an internet connection.")
+                    }
+                }
+
                 Section {
                     Text("**Server URL:** Enter the full URL where \(config.serviceType.displayName) is reachable, starting with the protocol string (**http://** or **https://**), followed by the IP or hostname, and ending with a colon (**:**) plus the port number. The default port for \(config.serviceType.displayName) is **\(config.serviceType.defaultPort, format: .number.grouping(.never))**.\n\n**\(config.serviceType.credType):** \(config.serviceType.credSummary)")
                         .font(.caption)
@@ -178,6 +188,8 @@ struct ServiceConfigSheet: View {
                         updated.apiKey = apiKey
                         updated.isEnabled = isEnabled
                         settings.updateConfig(updated)
+                        settings.showPeerFlags = showPeerFlags
+                        settings.save()
                         dismiss()
                     }
                 }

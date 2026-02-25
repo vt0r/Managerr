@@ -4,9 +4,11 @@ import Foundation
 final class SettingsStore {
     var configs: [ServerConfig]
     var defaultTab: TabSelection
+    var showPeerFlags: Bool
 
     private let configsKey = "serverConfigs"
     private let defaultTabKey = "defaultTab"
+    private let showPeerFlagsKey = "showPeerFlags"
 
     init() {
         if let data = UserDefaults.standard.data(forKey: configsKey),
@@ -23,6 +25,8 @@ final class SettingsStore {
         } else {
             defaultTab = .movies
         }
+
+        showPeerFlags = UserDefaults.standard.object(forKey: "showPeerFlags") as? Bool ?? true
         
         // Ensure all current service types have a config
         for type in ServerConfig.ServiceType.allCases {
@@ -37,6 +41,7 @@ final class SettingsStore {
             UserDefaults.standard.set(data, forKey: configsKey)
         }
         UserDefaults.standard.set(defaultTab.rawValue, forKey: defaultTabKey)
+        UserDefaults.standard.set(showPeerFlags, forKey: showPeerFlagsKey)
     }
 
     func config(for type: ServerConfig.ServiceType) -> ServerConfig {

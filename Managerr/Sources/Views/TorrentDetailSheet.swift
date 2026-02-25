@@ -236,7 +236,7 @@ struct TorrentDetailSheet: View {
                 }
             }
             .task {
-                await viewModel.fetchTorrentDetail(settings.config(for: .transmission), id: torrent.id)
+                await viewModel.fetchTorrentDetail(settings.config(for: .transmission), id: torrent.id, showFlags: settings.showPeerFlags)
             }
             .confirmationDialog("Remove Torrent", isPresented: $showDeleteConfirmation) {
                 Button("Remove Torrent", role: .destructive) {
