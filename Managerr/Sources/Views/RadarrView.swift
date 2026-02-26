@@ -64,7 +64,9 @@ struct RadarrView: View {
                 MovieLookupView()
             }
             .overlay(alignment: .bottomTrailing) {
-                if settings.isConfigured(.radarr) {
+                if settings.isConfigured(.radarr) &&
+                   !(viewModel.isLoading && viewModel.movies.isEmpty) &&
+                   !(viewModel.errorMessage != nil && viewModel.movies.isEmpty) {
                     Button {
                         showAddSheet = true
                     } label: {

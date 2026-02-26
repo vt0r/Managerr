@@ -77,7 +77,9 @@ struct LidarrView: View {
                 ArtistLookupView()
             }
             .overlay(alignment: .bottomTrailing) {
-                if settings.isConfigured(.lidarr) {
+                if settings.isConfigured(.lidarr) &&
+                   !(viewModel.isLoading && viewModel.artists.isEmpty) &&
+                   !(viewModel.errorMessage != nil && viewModel.artists.isEmpty) {
                     Button {
                         showAddSheet = true
                     } label: {

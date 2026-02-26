@@ -64,7 +64,9 @@ struct SonarrView: View {
                 SeriesLookupView()
             }
             .overlay(alignment: .bottomTrailing) {
-                if settings.isConfigured(.sonarr) {
+                if settings.isConfigured(.sonarr) &&
+                   !(viewModel.isLoading && viewModel.series.isEmpty) &&
+                   !(viewModel.errorMessage != nil && viewModel.series.isEmpty) {
                     Button {
                         showAddSheet = true
                     } label: {

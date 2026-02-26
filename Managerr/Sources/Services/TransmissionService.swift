@@ -1,6 +1,6 @@
 import Foundation
 
-final class TransmissionService {
+actor TransmissionService {
     static let shared = TransmissionService()
     private var sessionId: String = ""
 
