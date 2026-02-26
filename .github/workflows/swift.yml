@@ -26,7 +26,7 @@ jobs:
           xcodebuild build-for-testing \
             -project Managerr.xcodeproj \
             -scheme Managerr \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -destination 'platform=macOS,variant=Designed for iPad' \
             CODE_SIGNING_ALLOWED=NO \
           | xcpretty
 
@@ -36,6 +36,6 @@ jobs:
           xcodebuild test-without-building \
             -project Managerr.xcodeproj \
             -scheme Managerr \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -destination 'platform=macOS,variant=Designed for iPad' \
             CODE_SIGNING_ALLOWED=NO \
           | xcpretty
