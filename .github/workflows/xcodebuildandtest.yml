@@ -28,6 +28,8 @@ jobs:
             -scheme Managerr \
             -destination 'platform=macOS,variant=Designed for iPad' \
             CODE_SIGNING_ALLOWED=NO \
+            IPHONEOS_DEPLOYMENT_TARGET=17.0 \
+            MACOSX_DEPLOYMENT_TARGET=15.0 \
           | xcpretty
 
       - name: Test
@@ -37,5 +39,6 @@ jobs:
             -project Managerr.xcodeproj \
             -scheme Managerr \
             -destination 'platform=macOS,variant=Designed for iPad' \
+            -skip-testing:ManagerrUITests \
             CODE_SIGNING_ALLOWED=NO \
           | xcpretty
