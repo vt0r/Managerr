@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 @Observable
 final class SearchViewModel {
     var searchText: String = ""

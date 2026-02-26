@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 @Observable
 final class TransmissionViewModel {
     var torrents: [TransmissionTorrent] = []
