@@ -12,33 +12,37 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Show Xcode version
-        run: xcodebuild -version
+    - name: Show Xcode version
+      run: xcodebuild -version
 
-      - name: Install xcpretty
-        run: gem install xcpretty --no-document
+    - name: Install xcpretty
+      run: gem install xcpretty --no-document
 
-      - name: Build
-        run: |
-          set -o pipefail
-          xcodebuild build-for-testing \
-            -project Managerr.xcodeproj \
-            -scheme Managerr \
-            -destination 'platform=macOS,variant=Designed for iPad' \
-            CODE_SIGNING_ALLOWED=NO \
-            IPHONEOS_DEPLOYMENT_TARGET=18.0 \
-            MACOSX_DEPLOYMENT_TARGET=15.0 \
-          | xcpretty
+    - name: Build
+      run: |
+        set -o pipefail
+        xcodebuild build-for-testing \
+          -project Managerr.xcodeproj \
+          -scheme Managerr \
+          -destination 'platform=macOS,variant=Designed for iPad' \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO \
+          IPHONEOS_DEPLOYMENT_TARGET=18.0 \
+          MACOSX_DEPLOYMENT_TARGET=15.0 \
+        | xcpretty
 
-      - name: Test
-        run: |
-          set -o pipefail
-          xcodebuild test-without-building \
-            -project Managerr.xcodeproj \
-            -scheme Managerr \
-            -destination 'platform=macOS,variant=Designed for iPad' \
-            -skip-testing:ManagerrUITests \
-            CODE_SIGNING_ALLOWED=NO \
-          | xcpretty
+    - name: Test
+      run: |
+        set -o pipefail
+        xcodebuild test-without-building \
+          -project Managerr.xcodeproj \
+          -scheme Managerr \
+          -destination 'platform=macOS,variant=Designed for iPad' \
+          -skip-testing:ManagerrUITests \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO \
+        | xcpretty
