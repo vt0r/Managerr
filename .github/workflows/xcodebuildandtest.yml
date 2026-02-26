@@ -28,7 +28,7 @@ jobs:
             -scheme Managerr \
             -destination 'platform=macOS,variant=Designed for iPad' \
             CODE_SIGNING_ALLOWED=NO \
-            IPHONEOS_DEPLOYMENT_TARGET=17.0 \
+            IPHONEOS_DEPLOYMENT_TARGET=18.0 \
             MACOSX_DEPLOYMENT_TARGET=15.0 \
           | xcpretty
 
