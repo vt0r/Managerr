@@ -33,12 +33,14 @@ You can use the app with any combination of the above services — just enable t
 
 ### Service URLs
 
-Enter the full URL including protocol and port (unless it's port `80` or `443`), for example:
+Enter the full URL including protocol and port (unless it's port `80` or `443`). Examples:
 
 ``` bash
 # HTTPS: if your instance of Radarr lives behind a proxy/LB bound to port 443
 https://radarr.example.com
+#        Same thing, but under a URI path
 https://yourreverseproxy.example.com/radarr
+#        IP + URI path
 https://192.168.1.10/radarr
 
 # Regular HTTP (no TLS): connecting by IP on Radarr's default port (7878)
@@ -56,7 +58,7 @@ http://192.168.1.10:7878
 
 ## Building from the Command Line
 
-```bash
+``` bash
 # Build
 xcodebuild -project Managerr.xcodeproj -scheme Managerr \
   -destination 'platform=iOS Simulator,name=iPhone 16' build
@@ -81,8 +83,26 @@ Managerr/Sources/
 
 No external dependencies — pure Swift, SwiftUI, and Foundation.
 
-## Notes
+## Accessibility
 
-- All settings are stored locally on-device via `UserDefaults`
-- Poster images are cached to disk (`Caches/ManagerrImages/`) to reduce network traffic
-- Transmission uses JSON-RPC 2.0 with automatic session-ID negotiation
+Managerr targets full VoiceOver support and Dynamic Type compatibility at the minimum, and we will continue working to support more accessibility features as time goes on. We ask all contributors to please keep the following guidelines in mind to help us maintain (or improve!) our accessibility.
+
+### Guidelines
+
+**Every interactive element should be labelled.**
+Buttons, toggles, and tappable cards that rely on an icon or image alone need `.accessibilityLabel("…")`. Prefer concise noun/verb phrases ("Toggle monitoring", "Play trailer").
+
+**Decorative images should be hidden.**
+Pure-decoration images (e.g. posters used as backgrounds) get `.accessibilityHidden(true)` so VoiceOver skips them.
+
+**Compound cards should collapse into a single element.**
+Grid cards use `.accessibilityElement(children: .ignore)` + `.accessibilityLabel(…)` + `.accessibilityAddTraits(.isButton)` so VoiceOver reads one cohesive description instead of individual sub-views.
+
+**State should be expressed via label or value, not color alone.**
+Monitored/unmonitored toggles, download-status badges, and similar stateful elements must include the state in their `.accessibilityLabel` or `.accessibilityValue` (e.g. `localMonitored ? "Monitored" : "Not monitored"`).
+
+**Dynamic Type should not break layouts.**
+Use semantic font styles (`.caption`, `.headline`, etc.) rather than hard-coded sizes. If a fixed size is unavoidable, pair it with `.minimumScaleFactor(0.7)` and a line-limit that allows wrapping.
+
+**Hints are optional but welcome.**
+`.accessibilityHint("…")` can clarify what a non-obvious action does. Please keep hints short and in the third person ("Opens the detail sheet").
