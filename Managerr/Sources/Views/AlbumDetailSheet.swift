@@ -187,7 +187,10 @@ struct AlbumDetailSheet: View {
         if let fetched = try? await ArrService.shared.fetchLidarrTracks(lidarrConfig, albumId: album.id) {
             tracks = fetched.sorted {
                 let lM = $0.mediumNumber ?? 1; let rM = $1.mediumNumber ?? 1
-                return lM != rM ? lM < rM : ($0.trackNumber ?? 0) < ($1.trackNumber ?? 0)
+                if lM != rM { return lM < rM }
+                let lN = Int($0.trackNumber ?? "") ?? 0
+                let rN = Int($1.trackNumber ?? "") ?? 0
+                return lN < rN
             }
         }
         isLoadingTracks = false
@@ -239,7 +242,7 @@ struct AlbumDetailSheet: View {
 
     private func trackRow(_ track: LidarrTrack) -> some View {
         HStack(spacing: 8) {
-            Text("\(track.trackNumber ?? 0)")
+            Text(track.trackNumber ?? "?")
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
                 .frame(width: 24, alignment: .trailing)

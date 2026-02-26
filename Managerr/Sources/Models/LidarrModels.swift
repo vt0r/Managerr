@@ -154,7 +154,7 @@ nonisolated struct LidarrTrack: Codable, Identifiable, Sendable {
     let trackFileId: Int?
     let title: String?
     let duration: Int?        // milliseconds
-    let trackNumber: Int?
+    let trackNumber: String?  // Lidarr returns this as a string (e.g. "1", "A1")
     let mediumNumber: Int?    // disc number for multi-disc albums
     let hasFile: Bool
 
@@ -171,7 +171,7 @@ nonisolated struct LidarrTrack: Codable, Identifiable, Sendable {
         trackFileId  = try c.decodeIfPresent(Int.self,    forKey: .trackFileId)
         title        = try c.decodeIfPresent(String.self, forKey: .title)
         duration     = try c.decodeIfPresent(Int.self,    forKey: .duration)
-        trackNumber  = try c.decodeIfPresent(Int.self,    forKey: .trackNumber)
+        trackNumber  = try c.decodeIfPresent(String.self, forKey: .trackNumber)
         mediumNumber = try c.decodeIfPresent(Int.self,    forKey: .mediumNumber)
         hasFile      = try c.decodeIfPresent(Bool.self,   forKey: .hasFile)      ?? false
     }
