@@ -1,5 +1,11 @@
+//
+//  ManagerrTests.swift
+//  ManagerrTests
+//
+//  Created by Salvatore LaMendola on 2/26/26.
+//
+
 import Testing
-@testable import Managerr
 
 struct ManagerrTests {
 

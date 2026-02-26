@@ -37,14 +37,14 @@ The app uses **MVVM with SwiftUI** and the `@Observable` macro (requires iOS 17+
 
 ``` txt
 Managerr/Sources/
-├── MediaDashboardApp.swift   # App entry point, injects SettingsStore into environment
-├── ContentView.swift          # Root TabView (Movies, TV, Music, Torrents, Search, Settings)
-├── Config.swift               # Empty placeholder for future build-time config
-├── Models/                    # Decodable structs matching API response shapes
-├── Services/                  # Network layer (singletons)
-├── ViewModels/                # @Observable classes; own business logic and state
-├── Views/                     # SwiftUI views; read state from ViewModels
-└── Utilities/FormatUtils.swift # Byte/speed/ETA/percentage formatters
+├── MediaDashboardApp.swift       # App entry point, injects SettingsStore into environment
+├── ContentView.swift             # Root TabView (Movies, TV, Music, Torrents, Search, Settings)
+├── Config.swift                  # Empty placeholder for future build-time config
+├── Models/                       # Decodable structs matching API response shapes
+├── Services/                     # Network layer (singletons)
+├── ViewModels/                   # @Observable classes; own business logic and state
+├── Views/                        # SwiftUI views; read state from ViewModels
+└── Utilities/FormatUtils.swift   # Byte/speed/ETA/percentage formatters
 ```
 
 **No external dependencies** — pure Swift/SwiftUI/Foundation only.
