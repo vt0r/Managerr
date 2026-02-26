@@ -4,6 +4,7 @@ struct SonarrView: View {
     @Environment(SettingsStore.self) private var settings
     @State private var viewModel = SonarrViewModel()
     @State private var selectedSeries: SonarrSeries?
+    @State private var showAddSheet = false
 
     private let columns = [
         GridItem(.adaptive(minimum: 110), spacing: 12)
@@ -59,6 +60,27 @@ struct SonarrView: View {
             .sheet(item: $selectedSeries) { show in
                 SeriesDetailSheet(series: show, viewModel: viewModel)
             }
+            .sheet(isPresented: $showAddSheet) {
+                SeriesLookupView()
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if settings.isConfigured(.sonarr) {
+                    Button {
+                        showAddSheet = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 56, height: 56)
+                            .background(.tint)
+                            .clipShape(.circle)
+                            .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
+                    }
+                    .accessibilityLabel("Add TV Show")
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 20)
+                }
+            }
         }
     }
 
@@ -93,7 +115,7 @@ struct SonarrView: View {
                     }
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 20)
+                .padding(.bottom, 88)
             }
         }
     }

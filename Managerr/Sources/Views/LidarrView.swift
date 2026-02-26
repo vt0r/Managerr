@@ -5,6 +5,7 @@ struct LidarrView: View {
     @State private var viewModel = LidarrViewModel()
     @State private var selectedArtist: LidarrArtist?
     @State private var selectedAlbum: LidarrAlbum?
+    @State private var showAddSheet = false
 
     private let columns = [
         GridItem(.adaptive(minimum: 110), spacing: 12)
@@ -72,6 +73,27 @@ struct LidarrView: View {
             .sheet(item: $selectedAlbum) { album in
                 AlbumDetailSheet(album: album, viewModel: viewModel)
             }
+            .sheet(isPresented: $showAddSheet) {
+                ArtistLookupView()
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if settings.isConfigured(.lidarr) {
+                    Button {
+                        showAddSheet = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 56, height: 56)
+                            .background(.tint)
+                            .clipShape(.circle)
+                            .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
+                    }
+                    .accessibilityLabel("Add Artist")
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 20)
+                }
+            }
         }
     }
 
@@ -114,7 +136,7 @@ struct LidarrView: View {
             }
         }
         .padding(.horizontal)
-        .padding(.bottom, 20)
+        .padding(.bottom, 88)
     }
 
     private var artistGrid: some View {
@@ -135,7 +157,7 @@ struct LidarrView: View {
             }
         }
         .padding(.horizontal)
-        .padding(.bottom, 20)
+        .padding(.bottom, 88)
     }
 
     private var notConfiguredView: some View {

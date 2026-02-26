@@ -4,6 +4,7 @@ struct RadarrView: View {
     @Environment(SettingsStore.self) private var settings
     @State private var viewModel = RadarrViewModel()
     @State private var selectedMovie: RadarrMovie?
+    @State private var showAddSheet = false
 
     private let columns = [
         GridItem(.adaptive(minimum: 110), spacing: 12)
@@ -59,6 +60,27 @@ struct RadarrView: View {
             .sheet(item: $selectedMovie) { movie in
                 MovieDetailSheet(movie: movie, viewModel: viewModel)
             }
+            .sheet(isPresented: $showAddSheet) {
+                MovieLookupView()
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if settings.isConfigured(.radarr) {
+                    Button {
+                        showAddSheet = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 56, height: 56)
+                            .background(.tint)
+                            .clipShape(.circle)
+                            .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
+                    }
+                    .accessibilityLabel("Add Movie")
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 20)
+                }
+            }
         }
     }
 
@@ -90,7 +112,7 @@ struct RadarrView: View {
                     }
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 20)
+                .padding(.bottom, 88)
             }
         }
     }
