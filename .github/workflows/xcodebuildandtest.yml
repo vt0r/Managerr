@@ -1,4 +1,4 @@
-name: CI
+name: iOS CI
 
 on:
   push:
@@ -14,6 +14,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Select Xcode
+      run: sudo xcode-select -switch /Applications/Xcode.app
+
     - name: Show Xcode version
       run: xcodebuild -version
 
@@ -23,13 +26,10 @@ jobs:
     - name: Build
       run: |
         set -o pipefail
-        xcodebuild build-for-testing \
+        xcodebuild clean build \
           -project Managerr.xcodeproj \
           -scheme Managerr \
           -destination 'platform=macOS,variant=Designed for iPad' \
-          CODE_SIGN_IDENTITY="" \
-          CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGNING_ALLOWED=NO \
           IPHONEOS_DEPLOYMENT_TARGET=18.0 \
           MACOSX_DEPLOYMENT_TARGET=15.0 \
         | xcpretty
@@ -37,12 +37,9 @@ jobs:
     - name: Test
       run: |
         set -o pipefail
-        xcodebuild test-without-building \
+        xcodebuild test \
           -project Managerr.xcodeproj \
           -scheme Managerr \
           -destination 'platform=macOS,variant=Designed for iPad' \
           -skip-testing:ManagerrUITests \
-          CODE_SIGN_IDENTITY="" \
-          CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGNING_ALLOWED=NO \
         | xcpretty
