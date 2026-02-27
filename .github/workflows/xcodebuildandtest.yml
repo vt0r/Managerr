@@ -26,7 +26,7 @@ jobs:
     - name: Build
       run: |
         set -o pipefail
-        xcodebuild clean build \
+        xcodebuild build \
           -project Managerr.xcodeproj \
           -scheme Managerr \
           -destination 'platform=macOS,variant=Designed for iPad' \
