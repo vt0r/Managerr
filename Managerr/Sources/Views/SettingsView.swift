@@ -124,7 +124,7 @@ struct ServiceConfigSheet: View {
                 }
 
                 Section("Connection") {
-                    TextField("Server URL", text: $url)
+                    TextField("Server URL", text: $url, prompt: Text(config.serviceType.defaultURLHint))
                         .keyboardType(.URL)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)

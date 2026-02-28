@@ -40,6 +40,8 @@ nonisolated struct ServerConfig: Codable, Identifiable, Sendable {
             }
         }
 
+        var defaultURLHint: String { "http://localhost:\(defaultPort)" }
+
         var credType: String {
             switch self {
             case .radarr: "API Key"
@@ -77,13 +79,6 @@ nonisolated struct ServerConfig: Codable, Identifiable, Sendable {
     }
 
     static func defaultConfig(for type: ServiceType) -> ServerConfig {
-        let defaultURL: String
-        switch type {
-        case .radarr: defaultURL = "http://localhost:7878"
-        case .sonarr: defaultURL = "http://localhost:8989"
-        case .lidarr: defaultURL = "http://localhost:8686"
-        case .transmission: defaultURL = "http://localhost:9091"
-        }
-        return ServerConfig(url: defaultURL, apiKey: "", isEnabled: false, serviceType: type)
+        ServerConfig(url: "", apiKey: "", isEnabled: false, serviceType: type)
     }
 }
