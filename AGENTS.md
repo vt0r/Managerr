@@ -33,7 +33,9 @@ xcodebuild test -project Managerr.xcodeproj -scheme Managerr -destination 'platf
 
 ## Architecture
 
-The app uses **MVVM with SwiftUI** and the `@Observable` macro (requires iOS 17+). State is passed through the environment via `SettingsStore`.
+- The app uses **MVVM with SwiftUI** and the `@Observable` macro (requires iOS 17+). State is passed through the environment via `SettingsStore`.
+- Keep views thin; move logic into view models or dedicated services
+- Never put networking code directly in a view
 
 ``` txt
 Managerr/Sources/
@@ -121,6 +123,15 @@ Never hard-code font sizes with `.font(.system(size: N))` — use semantic style
 - [ ] Test with the largest Dynamic Type size (`Settings → Accessibility → Display & Text Size → Larger Text`) — no clipped or overflowing text
 - [ ] Verify colour-only states have a textual/label equivalent (no red/green-only indicators)
 
-## Expo/Web Config
+## Swift code conventions
 
-The `app/+native-intent.tsx` file is an Expo Router native intent handler — it redirects all system paths to `/`. This suggests the project may be part of a larger Expo/React Native setup, though the primary codebase is native Swift.
+- Use 2-space indentation
+- Prefer SwiftUI over UIKit unless explicitly targeting UIKit
+- Target iOS 26 and Swift 6.2
+- Use async/await over completion handlers
+- Prefer structured concurrency over unstructured tasks
+
+## Testing
+
+- Write tests for all new logic using Swift Testing
+- Prefer testing behavior over implementation details
