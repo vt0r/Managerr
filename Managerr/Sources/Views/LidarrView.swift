@@ -2,10 +2,14 @@ import SwiftUI
 
 struct LidarrView: View {
     @Environment(SettingsStore.self) private var settings
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var viewModel = LidarrViewModel()
     @State private var selectedArtist: LidarrArtist?
     @State private var selectedAlbum: LidarrAlbum?
     @State private var showAddSheet = false
+    @State private var isSpinning = false
+
+    private var isRefreshing: Bool { viewModel.isLoading && !viewModel.artists.isEmpty }
 
     private let columns = [
         GridItem(.adaptive(minimum: 110), spacing: 12)
@@ -55,8 +59,16 @@ struct LidarrView: View {
                         Task { await viewModel.fetchAll(settings.config(for: .lidarr)) }
                     } label: {
                         Image(systemName: "arrow.clockwise")
+                            .rotationEffect(.degrees(isSpinning ? 360 : 0))
+                            .animation(
+                                reduceMotion ? nil : (isSpinning ? .linear(duration: 1).repeatForever(autoreverses: false) : .default),
+                                value: isSpinning
+                            )
+                            .opacity(isRefreshing && reduceMotion ? 0.4 : 1)
                     }
-                    .accessibilityLabel("Refresh")
+                    .disabled(isRefreshing)
+                    .accessibilityLabel(isRefreshing ? "Refreshing" : "Refresh")
+                    .onChange(of: isRefreshing) { _, refreshing in isSpinning = refreshing }
                 }
             }
             .refreshable {
