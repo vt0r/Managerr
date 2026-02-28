@@ -89,6 +89,18 @@ actor TransmissionService {
         let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
     }
 
+    func addTorrentFile(_ config: ServerConfig, data: Data, downloadDir: String? = nil) async throws {
+        var args: [String: Any] = ["metainfo": data.base64EncodedString()]
+        if let downloadDir {
+            args["download-dir"] = downloadDir
+        }
+        let body: [String: Any] = [
+            "method": "torrent-add",
+            "arguments": args
+        ]
+        let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
     func verifyTorrent(_ config: ServerConfig, ids: [Int]) async throws {
         let body: [String: Any] = [
             "method": "torrent-verify",

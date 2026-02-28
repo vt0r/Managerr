@@ -1,10 +1,14 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct TransmissionView: View {
     @Environment(SettingsStore.self) private var settings
     @State private var viewModel = TransmissionViewModel()
-    @State private var showAddTorrent: Bool = false
-    @State private var magnetURL: String = ""
+    @State private var showFilePicker: Bool = false
+    @State private var showMagnetAlert: Bool = false
+    @State private var showURLAlert: Bool = false
+    @State private var magnetLink: String = ""
+    @State private var torrentURLString: String = ""
     @State private var selectedTorrent: TransmissionTorrent?
 
     var body: some View {
@@ -36,14 +40,6 @@ struct TransmissionView: View {
                         Image(systemName: "line.3.horizontal.decrease.circle")
                     }
                     .accessibilityLabel("Filter")
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showAddTorrent = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .accessibilityLabel("Add Torrent")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -80,20 +76,80 @@ struct TransmissionView: View {
                     await viewModel.fetchTorrentsSilently(config)
                 }
             }
-            .alert("Add Torrent", isPresented: $showAddTorrent) {
-                TextField("Magnet link or URL", text: $magnetURL)
+            .alert("Add Magnet Link", isPresented: $showMagnetAlert) {
+                TextField("magnet:?xt=urn:btih:…", text: $magnetLink)
                     .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
                 Button("Add") {
-                    guard !magnetURL.isEmpty else { return }
-                    Task {
-                        await viewModel.addTorrent(settings.config(for: .transmission), url: magnetURL)
-                        magnetURL = ""
-                    }
+                    let link = magnetLink
+                    magnetLink = ""
+                    guard !link.isEmpty else { return }
+                    Task { await viewModel.addTorrent(settings.config(for: .transmission), url: link) }
                 }
-                Button("Cancel", role: .cancel) { magnetURL = "" }
+                Button("Cancel", role: .cancel) { magnetLink = "" }
+            } message: {
+                Text("Paste a magnet link to add the torrent.")
+            }
+            .alert("Add Torrent URL", isPresented: $showURLAlert) {
+                TextField("https://example.com/file.torrent", text: $torrentURLString)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                Button("Add") {
+                    let url = torrentURLString
+                    torrentURLString = ""
+                    guard !url.isEmpty else { return }
+                    Task { await viewModel.addTorrent(settings.config(for: .transmission), url: url) }
+                }
+                Button("Cancel", role: .cancel) { torrentURLString = "" }
+            } message: {
+                Text("Paste a direct URL to a .torrent file.")
+            }
+            .fileImporter(
+                isPresented: $showFilePicker,
+                allowedContentTypes: [UTType(mimeType: "application/x-bittorrent") ?? .data]
+            ) { result in
+                guard case .success(let url) = result else { return }
+                guard url.startAccessingSecurityScopedResource() else { return }
+                defer { url.stopAccessingSecurityScopedResource() }
+                guard let data = try? Data(contentsOf: url) else { return }
+                Task { await viewModel.addTorrentFile(settings.config(for: .transmission), data: data) }
             }
             .sheet(item: $selectedTorrent) { torrent in
                 TorrentDetailSheet(torrent: torrent, viewModel: viewModel)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if settings.isConfigured(.transmission) &&
+                   !(viewModel.isLoading && viewModel.torrents.isEmpty) &&
+                   !(viewModel.errorMessage != nil && viewModel.torrents.isEmpty) {
+                    Menu {
+                        Button {
+                            showFilePicker = true
+                        } label: {
+                            Label("Upload .torrent File", systemImage: "doc.badge.plus")
+                        }
+                        Button {
+                            showMagnetAlert = true
+                        } label: {
+                            Label("Add Magnet Link", systemImage: "link")
+                        }
+                        Button {
+                            showURLAlert = true
+                        } label: {
+                            Label("Add Torrent URL", systemImage: "globe")
+                        }
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 56, height: 56)
+                            .background(.tint)
+                            .clipShape(.circle)
+                            .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
+                    }
+                    .accessibilityLabel("Add Torrent")
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 20)
+                }
             }
         }
     }
@@ -122,6 +178,7 @@ struct TransmissionView: View {
             }
         }
         .listStyle(.plain)
+        .contentMargins(.bottom, 88, for: .scrollContent)
     }
 
     @ViewBuilder

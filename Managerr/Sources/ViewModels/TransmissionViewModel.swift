@@ -114,6 +114,15 @@ final class TransmissionViewModel {
         }
     }
 
+    func addTorrentFile(_ config: ServerConfig, data: Data) async {
+        do {
+            try await TransmissionService.shared.addTorrentFile(config, data: data)
+            await fetchTorrents(config)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     func verifyTorrent(_ config: ServerConfig, id: Int) async {
         do {
             try await TransmissionService.shared.verifyTorrent(config, ids: [id])
