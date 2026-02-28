@@ -22,10 +22,6 @@ struct ContentView: View {
                 TransmissionView()
             }
 
-            Tab("Search", systemImage: "magnifyingglass", value: TabSelection.search) {
-                SearchView()
-            }
-
             Tab("Settings", systemImage: "gear", value: TabSelection.settings) {
                 SettingsView()
             }
