@@ -191,18 +191,21 @@ struct ArtistDetailSheet: View {
                         .scaleEffect(0.7)
                 }
             }
-            .padding(.horizontal)
             .padding(.bottom, 12)
 
             if !artistAlbums.isEmpty {
-                ForEach(artistAlbums) { album in
-                    albumRow(album)
-                    if album.id != artistAlbums.last?.id {
-                        Divider().padding(.leading, 78)
+                VStack(spacing: 0) {
+                    ForEach(artistAlbums) { album in
+                        albumRow(album)
+                        if album.id != artistAlbums.last?.id {
+                            Divider().padding(.leading, 80)
+                        }
                     }
                 }
+                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
             }
         }
+        .padding(.horizontal)
         .padding(.bottom)
     }
 
@@ -226,6 +229,7 @@ struct ArtistDetailSheet: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(album.title ?? "Unknown Album")
                         .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.tint)
                         .lineLimit(1)
                     if let date = album.releaseDate {
                         Text(String(date.prefix(4)))
@@ -245,10 +249,10 @@ struct ArtistDetailSheet: View {
                 }
 
                 Image(systemName: "chevron.right")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .contentShape(Rectangle())
         }

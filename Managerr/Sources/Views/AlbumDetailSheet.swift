@@ -116,8 +116,6 @@ struct AlbumDetailSheet: View {
                         .foregroundStyle(.secondary)
                     }
 
-                    tracksSection
-
                     if let viewModel {
                         HStack(spacing: 12) {
                             Button { showAutoSearchConfirm = true } label: {
@@ -151,6 +149,8 @@ struct AlbumDetailSheet: View {
                         }
                         .padding(.top, 8)
                     }
+
+                    tracksSection
                 }
                 .padding()
             }

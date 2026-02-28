@@ -34,9 +34,20 @@ struct TorrentDetailSheet: View {
                                 viewModel: viewModel
                             )
                         } label: {
-                            Label("Trackers (\(trackers.count))", systemImage: "antenna.radiowaves.left.and.right")
-                                .font(.subheadline)
+                            HStack {
+                                Label("Trackers (\(trackers.count))", systemImage: "antenna.radiowaves.left.and.right")
+                                    .foregroundStyle(.tint)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+                            .contentShape(Rectangle())
                         }
+                        .buttonStyle(.plain)
                     }
 
                     if let files = detail.files, !files.isEmpty {
@@ -178,9 +189,20 @@ struct TorrentDetailSheet: View {
                 NavigationLink {
                     PeerListView(peers: peers, countries: viewModel.peerCountries)
                 } label: {
-                    Label("View All Peers (\(peers.count))", systemImage: "person.2.circle")
-                        .font(.subheadline)
+                    HStack {
+                        Label("View All Peers (\(peers.count))", systemImage: "person.2.circle")
+                            .foregroundStyle(.tint)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             }
         }
     }

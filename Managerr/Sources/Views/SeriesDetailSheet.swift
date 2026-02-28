@@ -196,42 +196,51 @@ struct SeriesDetailSheet: View {
                         }
                     }
 
-                    ForEach(seasons) { season in
-                        Button { selectedSeason = season } label: {
-                            HStack(spacing: 8) {
-                                Circle()
-                                    .fill(season.monitored ? Color.accentColor : Color(.tertiaryLabel))
-                                    .frame(width: 6, height: 6)
+                    VStack(spacing: 0) {
+                        ForEach(seasons) { season in
+                            Button { selectedSeason = season } label: {
+                                HStack(spacing: 8) {
+                                    Circle()
+                                        .fill(season.monitored ? Color.accentColor : Color(.tertiaryLabel))
+                                        .frame(width: 6, height: 6)
 
-                                Text(season.seasonNumber == 0 ? "Specials" : "Season \(season.seasonNumber)")
-                                    .font(.subheadline)
+                                    Text(season.seasonNumber == 0 ? "Specials" : "Season \(season.seasonNumber)")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.tint)
 
-                                Spacer()
+                                    Spacer()
 
-                                if let stats = season.statistics {
-                                    let fileCount = stats.episodeFileCount ?? 0
-                                    let total = stats.totalEpisodeCount ?? 0
-                                    Text("\(fileCount)/\(total)")
-                                        .font(.caption)
-                                        .foregroundStyle(fileCount == total && total > 0 ? .green : .secondary)
+                                    if let stats = season.statistics {
+                                        let fileCount = stats.episodeFileCount ?? 0
+                                        let total = stats.totalEpisodeCount ?? 0
+                                        Text("\(fileCount)/\(total)")
+                                            .font(.caption)
+                                            .foregroundStyle(fileCount == total && total > 0 ? .green : .secondary)
 
-                                    if let pct = stats.percentOfEpisodes {
-                                        ProgressView(value: pct / 100)
-                                            .frame(width: 60)
+                                        if let pct = stats.percentOfEpisodes {
+                                            ProgressView(value: pct / 100)
+                                                .frame(width: 60)
+                                        }
                                     }
-                                }
 
-                                Image(systemName: "chevron.right")
-                                    .font(.caption2)
-                                    .foregroundStyle(.tertiary)
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 10)
+                                .contentShape(Rectangle())
                             }
-                            .padding(.vertical, 4)
-                            .contentShape(Rectangle())
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(season.seasonNumber == 0 ? "Specials" : "Season \(season.seasonNumber)")
+
+                            if season.id != seasons.last?.id {
+                                Divider()
+                                    .padding(.leading, 26)
+                            }
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(season.seasonNumber == 0 ? "Specials" : "Season \(season.seasonNumber)")
-                        .padding(.vertical, 10)
                     }
+                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
                 }
             }
 
