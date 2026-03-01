@@ -17,11 +17,6 @@ struct TorrentDetailSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     progressHeader
-
-                    if detail.isActive {
-                        activeRatesRow
-                    }
-
                     transferSection
                     peersSection
 
@@ -44,7 +39,7 @@ struct TorrentDetailSheet: View {
                             }
                             .padding(.horizontal, 12)
                             .padding(.vertical, 10)
-                            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+                            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
@@ -112,28 +107,28 @@ struct TorrentDetailSheet: View {
                     .font(.caption)
                     .foregroundStyle(.red)
             }
-        }
-    }
 
-    // MARK: - Active Transfer Rates
-
-    private var activeRatesRow: some View {
-        HStack(spacing: 20) {
-            if let dl = detail.rateDownload, dl > 0 {
-                Label(FormatUtils.speed(dl), systemImage: "arrow.down.circle.fill")
-                    .foregroundStyle(.green)
-            }
-            if let ul = detail.rateUpload, ul > 0 {
-                Label(FormatUtils.speed(ul), systemImage: "arrow.up.circle.fill")
-                    .foregroundStyle(.blue)
-            }
-            Spacer()
-            if let eta = detail.eta, eta > 0 {
-                Label(FormatUtils.eta(eta), systemImage: "clock")
-                    .foregroundStyle(.secondary)
+            if detail.isActive {
+                HStack(spacing: 20) {
+                    if let dl = detail.rateDownload, dl > 0 {
+                        Label(FormatUtils.speed(dl), systemImage: "arrow.down.circle.fill")
+                            .foregroundStyle(.green)
+                    }
+                    if let ul = detail.rateUpload, ul > 0 {
+                        Label(FormatUtils.speed(ul), systemImage: "arrow.up.circle.fill")
+                            .foregroundStyle(.blue)
+                    }
+                    Spacer()
+                    if let eta = detail.eta, eta > 0 {
+                        Label(FormatUtils.eta(eta), systemImage: "clock")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .font(.subheadline.monospacedDigit())
             }
         }
-        .font(.subheadline.monospacedDigit())
+        .padding()
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
     }
 
     // MARK: - Transfer Stats
@@ -163,6 +158,8 @@ struct TorrentDetailSheet: View {
                     statCell("Selected", FormatUtils.fileSize(selected))
                 }
             }
+            .padding()
+            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
         }
     }
 
@@ -199,7 +196,7 @@ struct TorrentDetailSheet: View {
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -249,59 +246,64 @@ struct TorrentDetailSheet: View {
             Text("Info")
                 .font(.headline)
 
-            if let dir = detail.downloadDir {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Location")
+            VStack(alignment: .leading, spacing: 12) {
+                if let dir = detail.downloadDir {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Location")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(dir)
+                            .font(.caption)
+                    }
+                }
+
+                if let hash = detail.hashString {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Hash")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(hash)
+                            .font(.system(.caption2, design: .monospaced))
+                            .lineLimit(1)
+                            .textSelection(.enabled)
+                    }
+                }
+
+                let addedStr = detail.addedDate.flatMap { $0 > 0 ? formatDate($0) : nil }
+                let doneStr = detail.doneDate.flatMap { $0 > 0 ? formatDate($0) : nil }
+
+                if addedStr != nil || doneStr != nil {
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 14) {
+                        if let s = addedStr { statCell("Added", s) }
+                        if let s = doneStr  { statCell("Completed", s) }
+                    }
+                }
+
+                if let pieces = detail.pieceCount, let pieceSize = detail.pieceSize {
+                    infoRow("Pieces", "\(pieces) × \(FormatUtils.fileSize(pieceSize))")
+                }
+                if let creator = detail.creator, !creator.isEmpty {
+                    infoRow("Creator", creator)
+                }
+                if let comment = detail.comment, !comment.isEmpty {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Comment")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(comment)
+                            .font(.caption)
+                            .lineLimit(3)
+                    }
+                }
+                if detail.isPrivate == true {
+                    Label("Private Torrent", systemImage: "lock.fill")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text(dir)
-                        .font(.caption)
                 }
             }
-
-            if let hash = detail.hashString {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Hash")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text(hash)
-                        .font(.system(.caption2, design: .monospaced))
-                        .lineLimit(1)
-                        .textSelection(.enabled)
-                }
-            }
-
-            let addedStr = detail.addedDate.flatMap { $0 > 0 ? formatDate($0) : nil }
-            let doneStr = detail.doneDate.flatMap { $0 > 0 ? formatDate($0) : nil }
-
-            if addedStr != nil || doneStr != nil {
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 14) {
-                    if let s = addedStr { statCell("Added", s) }
-                    if let s = doneStr  { statCell("Completed", s) }
-                }
-            }
-
-            if let pieces = detail.pieceCount, let pieceSize = detail.pieceSize {
-                infoRow("Pieces", "\(pieces) × \(FormatUtils.fileSize(pieceSize))")
-            }
-            if let creator = detail.creator, !creator.isEmpty {
-                infoRow("Creator", creator)
-            }
-            if let comment = detail.comment, !comment.isEmpty {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Comment")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text(comment)
-                        .font(.caption)
-                        .lineLimit(3)
-                }
-            }
-            if detail.isPrivate == true {
-                Label("Private Torrent", systemImage: "lock.fill")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
         }
     }
 

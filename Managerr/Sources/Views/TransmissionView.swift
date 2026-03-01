@@ -155,9 +155,9 @@ struct TransmissionView: View {
     }
 
     private var torrentList: some View {
-        List {
-            if viewModel.totalDownloadSpeed > 0 || viewModel.totalUploadSpeed > 0 {
-                Section {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                if viewModel.totalDownloadSpeed > 0 || viewModel.totalUploadSpeed > 0 {
                     HStack(spacing: 16) {
                         Label(FormatUtils.speed(viewModel.totalDownloadSpeed), systemImage: "arrow.down")
                             .foregroundStyle(.blue)
@@ -166,19 +166,21 @@ struct TransmissionView: View {
                             .foregroundStyle(.green)
                     }
                     .font(.subheadline.weight(.medium))
+                    .padding()
+                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
                 }
-            }
 
-            if viewModel.filteredTorrents.isEmpty {
-                ContentUnavailableView("No Torrents", systemImage: "arrow.down.circle")
-            } else {
-                ForEach(viewModel.filteredTorrents) { torrent in
-                    torrentCell(torrent)
+                if viewModel.filteredTorrents.isEmpty {
+                    ContentUnavailableView("No Torrents", systemImage: "arrow.down.circle")
+                } else {
+                    ForEach(viewModel.filteredTorrents) { torrent in
+                        torrentCell(torrent)
+                    }
                 }
             }
+            .padding(.horizontal)
+            .padding(.bottom, 88)
         }
-        .listStyle(.plain)
-        .contentMargins(.bottom, 88, for: .scrollContent)
     }
 
     @ViewBuilder
@@ -194,8 +196,37 @@ struct TransmissionView: View {
                     }
                 }
             })
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
         }
-        .tint(.primary)
+        .buttonStyle(.plain)
+        .contextMenu {
+            if torrent.status == 0 {
+                Button {
+                    Task { await viewModel.startTorrent(config, id: torrent.id) }
+                } label: {
+                    Label("Start", systemImage: "play.fill")
+                }
+            } else {
+                Button {
+                    Task { await viewModel.stopTorrent(config, id: torrent.id) }
+                } label: {
+                    Label("Stop", systemImage: "stop.fill")
+                }
+            }
+            Divider()
+            Button(role: .destructive) {
+                Task { await viewModel.removeTorrent(config, id: torrent.id, deleteData: false) }
+            } label: {
+                Label("Remove", systemImage: "trash")
+            }
+            Button(role: .destructive) {
+                Task { await viewModel.removeTorrent(config, id: torrent.id, deleteData: true) }
+            } label: {
+                Label("Remove with Data", systemImage: "trash.fill")
+            }
+        }
         .accessibilityLabel(torrent.name ?? "Unknown torrent")
         .accessibilityValue(torrent.statusText)
         .accessibilityAction(named: "Remove") {
@@ -208,30 +239,6 @@ struct TransmissionView: View {
                 } else {
                     await viewModel.stopTorrent(config, id: torrent.id)
                 }
-            }
-        }
-        .swipeActions(edge: .trailing) {
-            Button(role: .destructive) {
-                Task { await viewModel.removeTorrent(config, id: torrent.id, deleteData: true) }
-            } label: {
-                Label("Remove and delete data", systemImage: "trash")
-            }
-        }
-        .swipeActions(edge: .leading) {
-            if torrent.status == 0 {
-                Button {
-                    Task { await viewModel.startTorrent(config, id: torrent.id) }
-                } label: {
-                    Label("Start", systemImage: "play.fill")
-                }
-                .tint(.green)
-            } else if torrent.isActive {
-                Button {
-                    Task { await viewModel.stopTorrent(config, id: torrent.id) }
-                } label: {
-                    Label("Stop", systemImage: "stop.fill")
-                }
-                .tint(.orange)
             }
         }
     }
@@ -283,7 +290,7 @@ struct TorrentRow: View {
                 } label: {
                     Image(systemName: torrent.status == 0 ? "play.circle.fill" : "pause.circle.fill")
                         .font(.title2)
-                        .foregroundStyle(torrent.status == 0 ? .green : .orange)
+                        .foregroundStyle(.tint)
                 }
                 .buttonStyle(.plain)
                 .frame(width: 44, height: 44)
@@ -352,7 +359,6 @@ struct TorrentRow: View {
                 }
             }
         }
-        .padding(.vertical, 4)
     }
 
     private var statusColor: Color {
