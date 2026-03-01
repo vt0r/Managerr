@@ -10,6 +10,9 @@ struct AlbumDetailSheet: View {
     @State private var tracks: [LidarrTrack] = []
     @State private var isLoadingTracks: Bool = false
     @State private var showAutoSearchConfirm: Bool = false
+    @State private var showDeleteAlbumFilesConfirm: Bool = false
+    @State private var deletingTrack: LidarrTrack?
+    @State private var deletedTrackFileIds: Set<Int> = []
 
     init(album: LidarrAlbum, viewModel: LidarrViewModel? = nil) {
         self.album = album
@@ -24,137 +27,15 @@ struct AlbumDetailSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack(alignment: .top, spacing: 16) {
-                        Color(.secondarySystemBackground)
-                            .frame(width: 120, height: 120)
-                            .overlay {
-                                if let url = album.coverURL(config: lidarrConfig) {
-                                    CachedAsyncImage(url: url)
-                                        .allowsHitTesting(false)
-                                }
-                            }
-                            .clipShape(.rect(cornerRadius: 10))
-
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(album.title ?? "Unknown Album")
-                                .font(.title3.bold())
-                                .lineLimit(3)
-
-                            if let artist = album.artist?.artistName {
-                                Text(artist)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            HStack(spacing: 8) {
-                                if let albumType = album.albumType {
-                                    Text(albumType)
-                                        .font(.caption.weight(.medium))
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 3)
-                                        .background(Color(.tertiarySystemBackground), in: Capsule())
-                                }
-                                if let date = album.releaseDate {
-                                    Text(String(date.prefix(4)))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-
-                            if let ratings = album.ratings, let value = ratings.value, value > 0 {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "star.fill")
-                                        .foregroundStyle(.yellow)
-                                        .font(.caption)
-                                    Text(String(format: "%.1f", value))
-                                        .font(.subheadline.bold())
-                                }
-                            }
-                        }
-                    }
-
-                    if let overview = album.overview, !overview.isEmpty {
-                        Text(overview)
-                            .font(.body)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    if let genres = album.genres, !genres.isEmpty {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
-                                ForEach(genres, id: \.self) { genre in
-                                    Text(genre)
-                                        .font(.caption.weight(.medium))
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 5)
-                                        .background(Color(.tertiarySystemBackground), in: Capsule())
-                                }
-                            }
-                        }
-                        .contentMargins(.horizontal, 16)
-                    }
-
-                    if let stats = album.statistics {
-                        VStack(spacing: 8) {
-                            if let trackCount = stats.trackCount, let fileCount = stats.trackFileCount {
-                                HStack {
-                                    Label("Tracks", systemImage: "music.note")
-                                    Spacer()
-                                    Text("\(fileCount)/\(trackCount)")
-                                }
-                            }
-                            if let size = stats.sizeOnDisk, size > 0 {
-                                HStack {
-                                    Label("Size", systemImage: "internaldrive")
-                                    Spacer()
-                                    Text(FormatUtils.fileSize(size))
-                                }
-                            }
-                        }
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    }
-
-                    if let viewModel {
-                        HStack(spacing: 12) {
-                            Button { showAutoSearchConfirm = true } label: {
-                                Label("Auto Search", systemImage: "wand.and.stars").frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.bordered)
-                            .alert("Search for Album?", isPresented: $showAutoSearchConfirm) {
-                                Button("Search") {
-                                    Task { await viewModel.searchAlbum(lidarrConfig, albumId: album.id) }
-                                }
-                                Button("Cancel", role: .cancel) {}
-                            } message: {
-                                Text("Lidarr will search all configured indexers for \"\(album.title ?? "this album")\".")
-                            }
-
-                            Button { showManualSearch = true } label: {
-                                Label("Manual Search", systemImage: "magnifyingglass").frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.bordered)
-                            .sheet(isPresented: $showManualSearch) {
-                                ManualSearchView(
-                                    title: "Search: \(album.title ?? "Album")",
-                                    fetchReleases: {
-                                        try await ArrService.shared.fetchLidarrReleases(lidarrConfig, albumId: album.id)
-                                    },
-                                    grabRelease: { release in
-                                        try await ArrService.shared.grabLidarrRelease(lidarrConfig, guid: release.guid, indexerId: release.indexerId)
-                                    }
-                                )
-                            }
-                        }
-                        .padding(.top, 8)
-                    }
-
+                VStack(spacing: 0) {
+                    headerSection
+                    detailsSection
                     tracksSection
+                        .padding(.horizontal)
+                        .padding(.bottom)
                 }
-                .padding()
             }
-            .navigationTitle("Album Details")
+            .navigationTitle(album.title ?? "Album")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -173,11 +54,203 @@ struct AlbumDetailSheet: View {
                             .accessibilityHint("Toggles monitoring for this album")
                         }
 
+                        if viewModel != nil {
+                            Menu {
+                                Button(role: .destructive) {
+                                    showDeleteAlbumFilesConfirm = true
+                                } label: {
+                                    Label("Delete Album Files", systemImage: "trash")
+                                }
+                            } label: {
+                                Image(systemName: "ellipsis.circle")
+                            }
+                        }
+
                         Button("Done") { dismiss() }
                     }
                 }
             }
             .task { await loadTracks() }
+            .alert("Delete Album Files?", isPresented: $showDeleteAlbumFilesConfirm) {
+                Button("Delete", role: .destructive) {
+                    let fileIds = tracks.compactMap { t -> Int? in
+                        guard t.hasFile, let fid = t.trackFileId, !deletedTrackFileIds.contains(fid) else { return nil }
+                        return fid
+                    }
+                    if let vm = viewModel {
+                        Task {
+                            await vm.deleteAlbumFiles(lidarrConfig, trackFileIds: fileIds)
+                            fileIds.forEach { deletedTrackFileIds.insert($0) }
+                        }
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Delete all downloaded files for \"\(album.title ?? "this album")\"? This cannot be undone.")
+            }
+            .alert(
+                "Delete Track File?",
+                isPresented: Binding(get: { deletingTrack != nil }, set: { if !$0 { deletingTrack = nil } }),
+                presenting: deletingTrack
+            ) { track in
+                Button("Delete", role: .destructive) {
+                    guard let fileId = track.trackFileId, let vm = viewModel else { deletingTrack = nil; return }
+                    Task {
+                        await vm.deleteTrackFile(lidarrConfig, trackFileId: fileId)
+                        deletedTrackFileIds.insert(fileId)
+                    }
+                    deletingTrack = nil
+                }
+                Button("Cancel", role: .cancel) { deletingTrack = nil }
+            } message: { track in
+                Text("Delete the file for \"\(track.title ?? "this track")\"? This cannot be undone.")
+            }
+        }
+    }
+
+    private var headerSection: some View {
+        Color(.secondarySystemBackground)
+            .frame(height: 200)
+            .overlay {
+                if let url = album.coverURL(config: lidarrConfig) {
+                    CachedAsyncImage(url: url)
+                        .blur(radius: 20)
+                        .scaleEffect(1.3)
+                        .allowsHitTesting(false)
+                }
+            }
+            .clipShape(.rect(cornerRadius: 0))
+            .overlay(alignment: .bottom) {
+                LinearGradient(
+                    colors: [.clear, Color(.systemBackground)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 80)
+            }
+            .overlay(alignment: .bottomLeading) {
+                HStack(alignment: .bottom, spacing: 12) {
+                    Color(.tertiarySystemBackground)
+                        .frame(width: 80, height: 80)
+                        .overlay {
+                            if let url = album.coverURL(config: lidarrConfig) {
+                                CachedAsyncImage(url: url)
+                                    .allowsHitTesting(false)
+                            }
+                        }
+                        .clipShape(.rect(cornerRadius: 8))
+                        .shadow(radius: 4)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(album.title ?? "Unknown Album")
+                            .font(.title3.bold())
+                            .lineLimit(2)
+
+                        HStack(spacing: 8) {
+                            if let artist = album.artist?.artistName { Text(artist) }
+                            if let albumType = album.albumType { Text(albumType) }
+                            if let date = album.releaseDate { Text(String(date.prefix(4))) }
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }
+                }
+                .padding()
+            }
+    }
+
+    private var detailsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if let stats = album.statistics {
+                HStack(spacing: 24) {
+                    if let trackCount = stats.trackCount, let fileCount = stats.trackFileCount {
+                        statBadge(value: "\(fileCount)/\(trackCount)", label: "Tracks")
+                    }
+                    if let size = stats.sizeOnDisk, size > 0 {
+                        statBadge(value: FormatUtils.fileSize(size), label: "Size")
+                    }
+                }
+            }
+
+            if let ratings = album.ratings, let value = ratings.value, value > 0 {
+                HStack(spacing: 4) {
+                    Image(systemName: "star.fill")
+                        .foregroundStyle(.yellow)
+                    Text(String(format: "%.1f", value))
+                        .font(.headline)
+                    if let votes = ratings.votes {
+                        Text("(\(votes) votes)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            if let overview = album.overview, !overview.isEmpty {
+                Text(overview)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let genres = album.genres, !genres.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(genres, id: \.self) { genre in
+                            Text(genre)
+                                .font(.caption.weight(.medium))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Color(.tertiarySystemBackground), in: Capsule())
+                        }
+                    }
+                }
+                .contentMargins(.horizontal, 16)
+            }
+
+            if let viewModel {
+                HStack(spacing: 12) {
+                    Button { showAutoSearchConfirm = true } label: {
+                        Label("Auto Search", systemImage: "wand.and.stars").frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .alert("Search for Album?", isPresented: $showAutoSearchConfirm) {
+                        Button("Search") {
+                            Task { await viewModel.searchAlbum(lidarrConfig, albumId: album.id) }
+                        }
+                        Button("Cancel", role: .cancel) {}
+                    } message: {
+                        Text("Lidarr will search all configured indexers for \"\(album.title ?? "this album")\".")
+                    }
+
+                    Button { showManualSearch = true } label: {
+                        Label("Manual Search", systemImage: "magnifyingglass").frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .sheet(isPresented: $showManualSearch) {
+                        ManualSearchView(
+                            title: "Search: \(album.title ?? "Album")",
+                            fetchReleases: {
+                                try await ArrService.shared.fetchLidarrReleases(lidarrConfig, albumId: album.id)
+                            },
+                            grabRelease: { release in
+                                try await ArrService.shared.grabLidarrRelease(lidarrConfig, guid: release.guid, indexerId: release.indexerId)
+                            }
+                        )
+                    }
+                }
+                .padding(.top, 8)
+            }
+        }
+        .padding()
+    }
+
+    private func statBadge(value: String, label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.headline)
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -215,33 +288,48 @@ struct AlbumDetailSheet: View {
                     .font(.subheadline)
                     .foregroundStyle(.tertiary)
             } else if isMultiDisc {
-                ForEach(discNumbers, id: \.self) { disc in
-                    Text("Disc \(disc)")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .padding(.top, disc == discNumbers.first ? 0 : 8)
+                VStack(spacing: 0) {
+                    ForEach(discNumbers, id: \.self) { disc in
+                        HStack {
+                            Text("Disc \(disc)")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
 
-                    let discTracks = tracks.filter { ($0.mediumNumber ?? 1) == disc }
-                    ForEach(discTracks) { track in
+                        let discTracks = tracks.filter { ($0.mediumNumber ?? 1) == disc }
+                        ForEach(discTracks) { track in
+                            trackRow(track)
+                            if track.id != discTracks.last?.id {
+                                Divider().padding(.leading, 44)
+                            }
+                        }
+
+                        if disc != discNumbers.last {
+                            Divider()
+                        }
+                    }
+                }
+                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(tracks) { track in
                         trackRow(track)
-                        if track.id != discTracks.last?.id {
+                        if track.id != tracks.last?.id {
                             Divider().padding(.leading, 44)
                         }
                     }
                 }
-            } else {
-                ForEach(tracks) { track in
-                    trackRow(track)
-                    if track.id != tracks.last?.id {
-                        Divider().padding(.leading, 44)
-                    }
-                }
+                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
             }
         }
     }
 
     private func trackRow(_ track: LidarrTrack) -> some View {
-        HStack(spacing: 8) {
+        let filePresent = track.hasFile && !(track.trackFileId.map { deletedTrackFileIds.contains($0) } ?? false)
+        return HStack(spacing: 8) {
             Text(track.trackNumber ?? "?")
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
@@ -256,9 +344,20 @@ struct AlbumDetailSheet: View {
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
 
-            Image(systemName: track.hasFile ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(track.hasFile ? .green : Color(.tertiaryLabel))
+            Image(systemName: filePresent ? "checkmark.circle.fill" : "circle")
+                .foregroundStyle(filePresent ? .green : Color(.tertiaryLabel))
                 .font(.subheadline)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .contextMenu {
+            if filePresent, track.trackFileId != nil {
+                Button(role: .destructive) {
+                    deletingTrack = track
+                } label: {
+                    Label("Delete File", systemImage: "trash")
+                }
+            }
         }
     }
 }

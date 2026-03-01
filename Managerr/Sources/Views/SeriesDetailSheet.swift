@@ -185,6 +185,36 @@ struct SeriesDetailSheet: View {
                 .contentMargins(.horizontal, 16)
             }
 
+            HStack(spacing: 12) {
+                Button {
+                    showManualSearch = true
+                } label: {
+                    Label("Search Series", systemImage: "magnifyingglass")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .sheet(isPresented: $showManualSearch) {
+                    ManualSearchView(
+                        title: "Search: \(series.title)",
+                        fetchReleases: {
+                            try await ArrService.shared.fetchSonarrReleases(settings.config(for: .sonarr), seriesId: series.id)
+                        },
+                        grabRelease: { release in
+                            try await ArrService.shared.grabSonarrRelease(settings.config(for: .sonarr), guid: release.guid, indexerId: release.indexerId)
+                        }
+                    )
+                }
+
+                Button(role: .destructive) {
+                    showDeleteConfirmation = true
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding(.top, 8)
+
             if let seasons = series.seasons, !seasons.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
@@ -244,35 +274,6 @@ struct SeriesDetailSheet: View {
                 }
             }
 
-            HStack(spacing: 12) {
-                Button {
-                    showManualSearch = true
-                } label: {
-                    Label("Search Series", systemImage: "magnifyingglass")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .sheet(isPresented: $showManualSearch) {
-                    ManualSearchView(
-                        title: "Search: \(series.title)",
-                        fetchReleases: {
-                            try await ArrService.shared.fetchSonarrReleases(settings.config(for: .sonarr), seriesId: series.id)
-                        },
-                        grabRelease: { release in
-                            try await ArrService.shared.grabSonarrRelease(settings.config(for: .sonarr), guid: release.guid, indexerId: release.indexerId)
-                        }
-                    )
-                }
-
-                Button(role: .destructive) {
-                    showDeleteConfirmation = true
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-            }
-            .padding(.top, 8)
         }
         .padding()
     }

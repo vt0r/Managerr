@@ -105,6 +105,22 @@ final class LidarrViewModel {
         }
     }
 
+    func deleteTrackFile(_ config: ServerConfig, trackFileId: Int) async {
+        do {
+            try await ArrService.shared.deleteLidarrTrackFile(config, trackFileId: trackFileId)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func deleteAlbumFiles(_ config: ServerConfig, trackFileIds: [Int]) async {
+        do {
+            try await ArrService.shared.deleteLidarrAlbumFiles(config, trackFileIds: trackFileIds)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     @discardableResult
     func toggleArtistMonitored(_ config: ServerConfig, artist: LidarrArtist) async -> Bool {
         do {

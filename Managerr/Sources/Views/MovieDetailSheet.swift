@@ -167,28 +167,6 @@ struct MovieDetailSheet: View {
                 .contentMargins(.horizontal, 16)
             }
 
-            releaseInfoSection
-
-            if let sizeOnDisk = movie.sizeOnDisk, sizeOnDisk > 0 {
-                HStack {
-                    Label("Size", systemImage: "internaldrive")
-                    Spacer()
-                    Text(FormatUtils.fileSize(sizeOnDisk))
-                }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            }
-
-            if let quality = movie.movieFile?.quality?.quality?.name {
-                HStack {
-                    Label("Quality", systemImage: "sparkles.tv")
-                    Spacer()
-                    Text(quality)
-                }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            }
-
             HStack(spacing: 12) {
                 Button {
                     showManualSearch = true
@@ -218,6 +196,28 @@ struct MovieDetailSheet: View {
                 .buttonStyle(.bordered)
             }
             .padding(.top, 8)
+
+            releaseInfoSection
+
+            if let sizeOnDisk = movie.sizeOnDisk, sizeOnDisk > 0 {
+                HStack {
+                    Label("Size", systemImage: "internaldrive")
+                    Spacer()
+                    Text(FormatUtils.fileSize(sizeOnDisk))
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            }
+
+            if let quality = movie.movieFile?.quality?.quality?.name {
+                HStack {
+                    Label("Quality", systemImage: "sparkles.tv")
+                    Spacer()
+                    Text(quality)
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            }
         }
         .padding()
     }

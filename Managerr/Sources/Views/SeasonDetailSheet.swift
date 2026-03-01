@@ -12,6 +12,9 @@ struct SeasonDetailSheet: View {
     @State private var showManualSeasonSearch: Bool = false
     @State private var searchingEpisode: SonarrEpisode?
     @State private var manualSearchEpisode: SonarrEpisode?
+    @State private var showDeleteSeasonConfirm: Bool = false
+    @State private var deletingEpisode: SonarrEpisode?
+    @State private var deletedEpisodeFileIds: Set<Int> = []
 
     private var sonarrConfig: ServerConfig { settings.config(for: .sonarr) }
     private var seasonTitle: String {
@@ -62,6 +65,7 @@ struct SeasonDetailSheet: View {
                                 }
                             }
                         }
+                        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
                     }
                 }
                 .padding()
@@ -70,7 +74,19 @@ struct SeasonDetailSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
+                    HStack(spacing: 12) {
+                        Menu {
+                            Button(role: .destructive) {
+                                showDeleteSeasonConfirm = true
+                            } label: {
+                                Label("Delete Season Files", systemImage: "trash")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                        }
+
+                        Button("Done") { dismiss() }
+                    }
                 }
             }
             .alert("Search \(seasonTitle)?", isPresented: $showAutoSeasonSearchConfirm) {
@@ -80,6 +96,38 @@ struct SeasonDetailSheet: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("Sonarr will search all configured indexers for \(seasonTitle) of \(series.title).")
+            }
+            .alert("Delete Season Files?", isPresented: $showDeleteSeasonConfirm) {
+                Button("Delete", role: .destructive) {
+                    let fileIds = sortedEpisodes.compactMap { ep -> Int? in
+                        guard ep.hasFile, let fid = ep.episodeFileId, !deletedEpisodeFileIds.contains(fid) else { return nil }
+                        return fid
+                    }
+                    Task {
+                        await viewModel.deleteSeasonFiles(sonarrConfig, episodeFileIds: fileIds)
+                        fileIds.forEach { deletedEpisodeFileIds.insert($0) }
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Delete all downloaded files for \(seasonTitle) of \(series.title)? This cannot be undone.")
+            }
+            .alert(
+                "Delete Episode File?",
+                isPresented: Binding(get: { deletingEpisode != nil }, set: { if !$0 { deletingEpisode = nil } }),
+                presenting: deletingEpisode
+            ) { episode in
+                Button("Delete", role: .destructive) {
+                    guard let fileId = episode.episodeFileId else { deletingEpisode = nil; return }
+                    Task {
+                        await viewModel.deleteEpisodeFile(sonarrConfig, episodeFileId: fileId)
+                        deletedEpisodeFileIds.insert(fileId)
+                    }
+                    deletingEpisode = nil
+                }
+                Button("Cancel", role: .cancel) { deletingEpisode = nil }
+            } message: { episode in
+                Text("Delete the file for \"\(episode.title ?? "this episode")\"? This cannot be undone.")
             }
             .sheet(isPresented: $showManualSeasonSearch) {
                 ManualSearchView(
@@ -124,6 +172,7 @@ struct SeasonDetailSheet: View {
 
     @ViewBuilder
     private func episodeRow(_ episode: SonarrEpisode) -> some View {
+        let filePresent = episode.hasFile && !(episode.episodeFileId.map { deletedEpisodeFileIds.contains($0) } ?? false)
         HStack(spacing: 8) {
             Text("S\(episode.seasonNumber)E\(episode.episodeNumber)")
                 .font(.caption.monospacedDigit())
@@ -143,8 +192,8 @@ struct SeasonDetailSheet: View {
 
             Spacer()
 
-            Image(systemName: episode.hasFile ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(episode.hasFile ? Color.green : Color(.tertiaryLabel))
+            Image(systemName: filePresent ? "checkmark.circle.fill" : "circle")
+                .foregroundStyle(filePresent ? Color.green : Color(.tertiaryLabel))
 
             Button {
                 searchingEpisode = episode
@@ -155,6 +204,16 @@ struct SeasonDetailSheet: View {
             }
             .buttonStyle(.borderless)
         }
+        .padding(.horizontal, 12)
         .padding(.vertical, 12)
+        .contextMenu {
+            if filePresent, episode.episodeFileId != nil {
+                Button(role: .destructive) {
+                    deletingEpisode = episode
+                } label: {
+                    Label("Delete File", systemImage: "trash")
+                }
+            }
+        }
     }
 }

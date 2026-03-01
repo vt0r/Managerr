@@ -124,6 +124,30 @@ nonisolated final class ArrService: Sendable {
         _ = try await network.requestRaw(url: url, method: "DELETE", headers: headers(for: config))
     }
 
+    func deleteSonarrEpisodeFile(_ config: ServerConfig, episodeFileId: Int) async throws {
+        let url = try makeURL(config, path: "/api/v3/episodefile/\(episodeFileId)")
+        _ = try await network.requestRaw(url: url, method: "DELETE", headers: headers(for: config))
+    }
+
+    func deleteSonarrSeasonFiles(_ config: ServerConfig, episodeFileIds: [Int]) async throws {
+        struct Body: Encodable { let episodeFileIds: [Int] }
+        let url = try makeURL(config, path: "/api/v3/episodefile/bulk")
+        let body = try JSONEncoder().encode(Body(episodeFileIds: episodeFileIds))
+        _ = try await network.requestRaw(url: url, method: "DELETE", headers: headers(for: config), body: body)
+    }
+
+    func deleteLidarrTrackFile(_ config: ServerConfig, trackFileId: Int) async throws {
+        let url = try makeURL(config, path: "/api/v1/trackfile/\(trackFileId)")
+        _ = try await network.requestRaw(url: url, method: "DELETE", headers: headers(for: config))
+    }
+
+    func deleteLidarrAlbumFiles(_ config: ServerConfig, trackFileIds: [Int]) async throws {
+        struct Body: Encodable { let trackFileIds: [Int] }
+        let url = try makeURL(config, path: "/api/v1/trackfile/bulk")
+        let body = try JSONEncoder().encode(Body(trackFileIds: trackFileIds))
+        _ = try await network.requestRaw(url: url, method: "DELETE", headers: headers(for: config), body: body)
+    }
+
     func commandLidarr(_ config: ServerConfig, command: LidarrCommand) async throws {
         let url = try makeURL(config, path: "/api/v1/command")
         let body = try JSONEncoder().encode(command)

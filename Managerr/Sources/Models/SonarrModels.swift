@@ -125,9 +125,10 @@ nonisolated struct SonarrEpisode: Codable, Identifiable, Sendable {
     let hasFile: Bool
     let monitored: Bool
     let airDate: String?
+    let episodeFileId: Int?
 
     enum CodingKeys: String, CodingKey {
-        case id, seriesId, seasonNumber, episodeNumber, title, overview, hasFile, monitored, airDate
+        case id, seriesId, seasonNumber, episodeNumber, title, overview, hasFile, monitored, airDate, episodeFileId
     }
 
     init(from decoder: Decoder) throws {
@@ -141,6 +142,7 @@ nonisolated struct SonarrEpisode: Codable, Identifiable, Sendable {
         hasFile       = try c.decodeIfPresent(Bool.self,   forKey: .hasFile)       ?? false
         monitored     = try c.decodeIfPresent(Bool.self,   forKey: .monitored)     ?? false
         airDate       = try c.decodeIfPresent(String.self, forKey: .airDate)
+        episodeFileId = try c.decodeIfPresent(Int.self,    forKey: .episodeFileId)
     }
 }
 

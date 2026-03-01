@@ -212,9 +212,9 @@ struct TransmissionView: View {
         }
         .swipeActions(edge: .trailing) {
             Button(role: .destructive) {
-                Task { await viewModel.removeTorrent(config, id: torrent.id, deleteData: false) }
+                Task { await viewModel.removeTorrent(config, id: torrent.id, deleteData: true) }
             } label: {
-                Label("Remove", systemImage: "trash")
+                Label("Remove and delete data", systemImage: "trash")
             }
         }
         .swipeActions(edge: .leading) {

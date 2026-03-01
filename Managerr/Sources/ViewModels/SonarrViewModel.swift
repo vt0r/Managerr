@@ -82,6 +82,22 @@ final class SonarrViewModel {
         )
     }
 
+    func deleteEpisodeFile(_ config: ServerConfig, episodeFileId: Int) async {
+        do {
+            try await ArrService.shared.deleteSonarrEpisodeFile(config, episodeFileId: episodeFileId)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func deleteSeasonFiles(_ config: ServerConfig, episodeFileIds: [Int]) async {
+        do {
+            try await ArrService.shared.deleteSonarrSeasonFiles(config, episodeFileIds: episodeFileIds)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     @discardableResult
     func toggleMonitored(_ config: ServerConfig, show: SonarrSeries) async -> Bool {
         do {

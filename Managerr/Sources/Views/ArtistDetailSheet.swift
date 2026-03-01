@@ -48,6 +48,16 @@ struct ArtistDetailSheet: View {
                         .accessibilityLabel(localMonitored ? "Monitored" : "Not monitored")
                         .accessibilityHint("Toggles monitoring for this artist")
 
+                        Menu {
+                            Button(role: .destructive) {
+                                showDeleteConfirmation = true
+                            } label: {
+                                Label("Delete Artist", systemImage: "trash")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                        }
+
                         Button("Done") { dismiss() }
                     }
                 }
@@ -166,17 +176,6 @@ struct ArtistDetailSheet: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             }
-
-            HStack(spacing: 12) {
-                Button(role: .destructive) {
-                    showDeleteConfirmation = true
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-            }
-            .padding(.top, 8)
         }
         .padding()
     }
