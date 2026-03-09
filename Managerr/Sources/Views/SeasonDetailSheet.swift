@@ -180,7 +180,8 @@ struct SeasonDetailSheet: View {
 
     @ViewBuilder
     private func episodeRow(_ episode: SonarrEpisode) -> some View {
-        let filePresent = episode.hasFile && !(episode.episodeFileId.map { deletedEpisodeFileIds.contains($0) } ?? false)
+        let isImported = episode.hasFile && episode.episodeFileId != nil && !(episode.episodeFileId.map { deletedEpisodeFileIds.contains($0) } ?? false)
+        let isDownloading = episode.hasFile && episode.episodeFileId == nil
         HStack(spacing: 8) {
             Text("S\(episode.seasonNumber)E\(episode.episodeNumber)")
                 .font(.caption.monospacedDigit())
@@ -200,8 +201,8 @@ struct SeasonDetailSheet: View {
 
             Spacer()
 
-            Image(systemName: filePresent ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(filePresent ? Color.green : Color(.tertiaryLabel))
+            Image(systemName: isImported ? "checkmark.circle.fill" : isDownloading ? "arrow.down.circle.fill" : "circle")
+                .foregroundStyle(isImported ? Color.green : isDownloading ? Color.orange : Color(.tertiaryLabel))
 
             Button {
                 searchingEpisode = episode
@@ -215,7 +216,7 @@ struct SeasonDetailSheet: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 12)
         .contextMenu {
-            if filePresent, episode.episodeFileId != nil {
+            if isImported {
                 Button(role: .destructive) {
                     deletingEpisode = episode
                 } label: {

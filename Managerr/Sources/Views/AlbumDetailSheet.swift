@@ -331,7 +331,8 @@ struct AlbumDetailSheet: View {
     }
 
     private func trackRow(_ track: LidarrTrack) -> some View {
-        let filePresent = track.hasFile && !(track.trackFileId.map { deletedTrackFileIds.contains($0) } ?? false)
+        let isImported = track.hasFile && track.trackFileId != nil && !(track.trackFileId.map { deletedTrackFileIds.contains($0) } ?? false)
+        let isDownloading = track.hasFile && track.trackFileId == nil
         return HStack(spacing: 8) {
             Text(track.trackNumber ?? "?")
                 .font(.caption.monospacedDigit())
@@ -347,14 +348,14 @@ struct AlbumDetailSheet: View {
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
 
-            Image(systemName: filePresent ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(filePresent ? .green : Color(.tertiaryLabel))
+            Image(systemName: isImported ? "checkmark.circle.fill" : isDownloading ? "arrow.down.circle.fill" : "circle")
+                .foregroundStyle(isImported ? .green : isDownloading ? .orange : Color(.tertiaryLabel))
                 .font(.subheadline)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .contextMenu {
-            if filePresent, track.trackFileId != nil {
+            if isImported {
                 Button(role: .destructive) {
                     deletingTrack = track
                 } label: {

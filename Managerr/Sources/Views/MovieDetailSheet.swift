@@ -130,10 +130,14 @@ struct MovieDetailSheet: View {
                                 .padding(.vertical, 3)
                                 .background(badge == "MISSING" ? Color.red.opacity(0.2) : Color.orange.opacity(0.2), in: Capsule())
                                 .foregroundStyle(badge == "MISSING" ? .red : .orange)
-                        } else if movie.hasFile {
+                        } else if movie.hasFile && movie.movieFile != nil {
                             Label("On Disk", systemImage: "checkmark.circle.fill")
                                 .font(.caption)
                                 .foregroundStyle(.green)
+                        } else if movie.hasFile {
+                            Label("Importing…", systemImage: "arrow.down.circle.fill")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
                         }
                     }
                 }
