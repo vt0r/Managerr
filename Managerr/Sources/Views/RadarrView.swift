@@ -65,8 +65,15 @@ struct RadarrView: View {
                 await viewModel.fetchMovies(settings.config(for: .radarr))
             }
             .task {
-                if viewModel.movies.isEmpty && settings.isConfigured(.radarr) {
-                    await viewModel.fetchMovies(settings.config(for: .radarr))
+                guard settings.isConfigured(.radarr) else { return }
+                let config = settings.config(for: .radarr)
+                if viewModel.movies.isEmpty {
+                    await viewModel.fetchMovies(config)
+                }
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(60))
+                    guard !Task.isCancelled else { break }
+                    await viewModel.fetchMoviesSilently(config)
                 }
             }
             .sheet(item: $selectedMovie) { movie in

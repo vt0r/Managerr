@@ -65,8 +65,15 @@ struct SonarrView: View {
                 await viewModel.fetchSeries(settings.config(for: .sonarr))
             }
             .task {
-                if viewModel.series.isEmpty && settings.isConfigured(.sonarr) {
-                    await viewModel.fetchSeries(settings.config(for: .sonarr))
+                guard settings.isConfigured(.sonarr) else { return }
+                let config = settings.config(for: .sonarr)
+                if viewModel.series.isEmpty {
+                    await viewModel.fetchSeries(config)
+                }
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(60))
+                    guard !Task.isCancelled else { break }
+                    await viewModel.fetchSeriesSilently(config)
                 }
             }
             .sheet(item: $selectedSeries) { show in

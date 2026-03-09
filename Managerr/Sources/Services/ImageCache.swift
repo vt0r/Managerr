@@ -112,7 +112,7 @@ actor ImageLoader {
                       (200...299).contains(httpResponse.statusCode) else {
                     if let httpResponse = response as? HTTPURLResponse {
                         let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type") ?? "unknown"
-                        Self.logger.debug("Image load attempt \(attempt + 1) failed for \(url.absoluteString) — HTTP \(httpResponse.statusCode), Content-Type: \(contentType), \(data.count) bytes")
+                        Self.logger.debug("Image load attempt \(attempt + 1) failed for \(ImageURLResolver.redacted(url)) — HTTP \(httpResponse.statusCode), Content-Type: \(contentType), \(data.count) bytes")
                         if httpResponse.statusCode == 404 {
                             break
                         }
@@ -125,11 +125,11 @@ actor ImageLoader {
                 storeInMemory(image, forKey: key)
                 return image
             } catch {
-                Self.logger.debug("Image load attempt \(attempt + 1) error for \(url.absoluteString): \(error.localizedDescription)")
+                Self.logger.debug("Image load attempt \(attempt + 1) error for \(ImageURLResolver.redacted(url)): \(error.localizedDescription)")
                 continue
             }
         }
-        Self.logger.debug("Image load failed after all retries: \(url.absoluteString)")
+        Self.logger.debug("Image load failed after all retries: \(ImageURLResolver.redacted(url))")
         return nil
     }
 

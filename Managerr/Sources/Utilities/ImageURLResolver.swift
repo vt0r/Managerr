@@ -1,6 +1,13 @@
 import Foundation
 
 nonisolated enum ImageURLResolver {
+    /// Returns the URL as a string with query parameters removed, safe to include in log messages.
+    static func redacted(_ url: URL) -> String {
+        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        components?.queryItems = nil
+        return components?.string ?? url.absoluteString
+    }
+
     static func resolve(_ urlString: String?, baseURL: URL?) -> URL? {
         guard let urlString, !urlString.isEmpty else { return nil }
         if let url = URL(string: urlString), url.scheme != nil {

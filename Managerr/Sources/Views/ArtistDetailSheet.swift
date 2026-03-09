@@ -41,6 +41,7 @@ struct ArtistDetailSheet: View {
                             Task {
                                 let ok = await viewModel.toggleArtistMonitored(lidarrConfig, artist: artist)
                                 if !ok { localMonitored.toggle() }
+                                await viewModel.fetchArtistsSilently(lidarrConfig)
                             }
                         } label: {
                             Image(systemName: localMonitored ? "eye.fill" : "eye.slash")

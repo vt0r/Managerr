@@ -38,6 +38,7 @@ struct MovieDetailSheet: View {
                             Task {
                                 let ok = await viewModel.toggleMonitored(settings.config(for: .radarr), movie: movie)
                                 if !ok { localMonitored.toggle() }
+                                await viewModel.fetchMoviesSilently(settings.config(for: .radarr))
                             }
                         } label: {
                             Image(systemName: localMonitored ? "eye.fill" : "eye.slash")

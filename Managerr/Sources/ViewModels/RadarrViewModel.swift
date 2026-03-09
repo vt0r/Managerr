@@ -50,6 +50,14 @@ final class RadarrViewModel {
         isLoading = false
     }
 
+    func fetchMoviesSilently(_ config: ServerConfig) async {
+        guard !isLoading else { return }
+        do {
+            movies = try await ArrService.shared.fetchRadarrMovies(config)
+            errorMessage = nil
+        } catch { }
+    }
+
     func deleteMovie(_ config: ServerConfig, movie: RadarrMovie, deleteFiles: Bool) async {
         do {
             try await ArrService.shared.deleteRadarrMovie(config, id: movie.id, deleteFiles: deleteFiles)

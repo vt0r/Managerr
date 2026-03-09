@@ -75,8 +75,15 @@ struct LidarrView: View {
                 await viewModel.fetchAll(settings.config(for: .lidarr))
             }
             .task {
-                if viewModel.artists.isEmpty && settings.isConfigured(.lidarr) {
-                    await viewModel.fetchAll(settings.config(for: .lidarr))
+                guard settings.isConfigured(.lidarr) else { return }
+                let config = settings.config(for: .lidarr)
+                if viewModel.artists.isEmpty {
+                    await viewModel.fetchAll(config)
+                }
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(60))
+                    guard !Task.isCancelled else { break }
+                    await viewModel.fetchArtistsSilently(config)
                 }
             }
             .sheet(item: $selectedArtist) { artist in

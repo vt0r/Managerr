@@ -51,6 +51,7 @@ struct SeriesDetailSheet: View {
                             Task {
                                 let ok = await viewModel.toggleMonitored(settings.config(for: .sonarr), show: series)
                                 if !ok { localMonitored.toggle() }
+                                await viewModel.fetchSeriesSilently(settings.config(for: .sonarr))
                             }
                         } label: {
                             Image(systemName: localMonitored ? "eye.fill" : "eye.slash")

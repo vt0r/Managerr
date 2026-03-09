@@ -50,6 +50,14 @@ final class SonarrViewModel {
         isLoading = false
     }
 
+    func fetchSeriesSilently(_ config: ServerConfig) async {
+        guard !isLoading else { return }
+        do {
+            series = try await ArrService.shared.fetchSonarrSeries(config)
+            errorMessage = nil
+        } catch { }
+    }
+
     func deleteSeries(_ config: ServerConfig, show: SonarrSeries, deleteFiles: Bool) async {
         do {
             try await ArrService.shared.deleteSonarrSeries(config, id: show.id, deleteFiles: deleteFiles)

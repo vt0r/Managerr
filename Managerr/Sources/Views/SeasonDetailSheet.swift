@@ -91,7 +91,10 @@ struct SeasonDetailSheet: View {
             }
             .alert("Search \(seasonTitle)?", isPresented: $showAutoSeasonSearchConfirm) {
                 Button("Search") {
-                    Task { await viewModel.searchSeason(sonarrConfig, seriesId: series.id, seasonNumber: season.seasonNumber) }
+                    Task {
+                        await viewModel.searchSeason(sonarrConfig, seriesId: series.id, seasonNumber: season.seasonNumber)
+                        await viewModel.fetchSeriesSilently(sonarrConfig)
+                    }
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
@@ -106,6 +109,7 @@ struct SeasonDetailSheet: View {
                     Task {
                         await viewModel.deleteSeasonFiles(sonarrConfig, episodeFileIds: fileIds)
                         fileIds.forEach { deletedEpisodeFileIds.insert($0) }
+                        await viewModel.fetchSeriesSilently(sonarrConfig)
                     }
                 }
                 Button("Cancel", role: .cancel) {}
@@ -122,6 +126,7 @@ struct SeasonDetailSheet: View {
                     Task {
                         await viewModel.deleteEpisodeFile(sonarrConfig, episodeFileId: fileId)
                         deletedEpisodeFileIds.insert(fileId)
+                        await viewModel.fetchSeriesSilently(sonarrConfig)
                     }
                     deletingEpisode = nil
                 }
@@ -148,7 +153,10 @@ struct SeasonDetailSheet: View {
                 Button("Auto Search") {
                     guard let ep = searchingEpisode else { return }
                     searchingEpisode = nil
-                    Task { await viewModel.searchEpisode(sonarrConfig, episodeId: ep.id) }
+                    Task {
+                        await viewModel.searchEpisode(sonarrConfig, episodeId: ep.id)
+                        await viewModel.fetchSeriesSilently(sonarrConfig)
+                    }
                 }
                 Button("Manual Search") {
                     manualSearchEpisode = searchingEpisode

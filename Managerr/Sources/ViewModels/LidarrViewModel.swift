@@ -78,6 +78,14 @@ final class LidarrViewModel {
         isLoading = false
     }
 
+    func fetchArtistsSilently(_ config: ServerConfig) async {
+        guard !isLoading else { return }
+        do {
+            artists = try await ArrService.shared.fetchLidarrArtists(config)
+            errorMessage = nil
+        } catch { }
+    }
+
     func deleteArtist(_ config: ServerConfig, artist: LidarrArtist) async {
         do {
             try await ArrService.shared.deleteLidarrArtist(config, id: artist.id)

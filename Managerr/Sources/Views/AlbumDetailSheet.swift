@@ -46,6 +46,7 @@ struct AlbumDetailSheet: View {
                                 Task {
                                     let ok = await viewModel.toggleAlbumMonitored(lidarrConfig, album: album)
                                     if !ok { localMonitored.toggle() }
+                                    await viewModel.fetchArtistsSilently(lidarrConfig)
                                 }
                             } label: {
                                 Image(systemName: localMonitored ? "eye.fill" : "eye.slash")
@@ -81,6 +82,7 @@ struct AlbumDetailSheet: View {
                         Task {
                             await vm.deleteAlbumFiles(lidarrConfig, trackFileIds: fileIds)
                             fileIds.forEach { deletedTrackFileIds.insert($0) }
+                            await vm.fetchArtistsSilently(lidarrConfig)
                         }
                     }
                 }
@@ -98,6 +100,7 @@ struct AlbumDetailSheet: View {
                     Task {
                         await vm.deleteTrackFile(lidarrConfig, trackFileId: fileId)
                         deletedTrackFileIds.insert(fileId)
+                        await vm.fetchArtistsSilently(lidarrConfig)
                     }
                     deletingTrack = nil
                 }
