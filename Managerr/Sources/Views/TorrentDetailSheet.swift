@@ -62,7 +62,13 @@ struct TorrentDetailSheet: View {
                 }
             }
             .task {
-                await viewModel.fetchTorrentDetail(settings.config(for: .transmission), id: torrent.id, showFlags: settings.showPeerFlags)
+                let config = settings.config(for: .transmission)
+                await viewModel.fetchTorrentDetail(config, id: torrent.id, showFlags: settings.showPeerFlags)
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(5))
+                    guard !Task.isCancelled else { break }
+                    await viewModel.fetchTorrentDetail(config, id: torrent.id, showFlags: settings.showPeerFlags)
+                }
             }
             .confirmationDialog("Remove Torrent", isPresented: $showDeleteConfirmation) {
                 Button("Remove Torrent", role: .destructive) {
@@ -184,7 +190,7 @@ struct TorrentDetailSheet: View {
 
             if let peers = detail.peers, !peers.isEmpty {
                 NavigationLink {
-                    PeerListView(peers: peers, countries: viewModel.peerCountries)
+                    PeerListView(peers: peers, viewModel: viewModel)
                 } label: {
                     HStack {
                         Label("View All Peers (\(peers.count))", systemImage: "person.2.circle")

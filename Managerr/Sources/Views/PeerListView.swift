@@ -2,7 +2,7 @@ import SwiftUI
 
 struct PeerListView: View {
     let peers: [TransmissionPeer]
-    let countries: [String: String]
+    let viewModel: TransmissionViewModel
 
     var body: some View {
         List {
@@ -18,7 +18,7 @@ struct PeerListView: View {
             }
 
             ForEach(sortedPeers) { peer in
-                PeerRow(peer: peer, countryCode: countries[peer.address ?? ""])
+                PeerRow(peer: peer, countryCode: viewModel.peerCountries[peer.address ?? ""])
             }
         }
         .listStyle(.insetGrouped)
@@ -27,11 +27,17 @@ struct PeerListView: View {
     }
 
     private var sortedPeers: [TransmissionPeer] {
-        peers.sorted { lhs, rhs in
-            let lhsRate: Int64 = (lhs.rateToClient ?? 0) + (lhs.rateToPeer ?? 0)
-            let rhsRate: Int64 = (rhs.rateToClient ?? 0) + (rhs.rateToPeer ?? 0)
-            return lhsRate > rhsRate
-        }
+        var seen = Set<String>()
+        return peers
+            .filter { peer in
+                guard let address = peer.address else { return false }
+                return seen.insert(address).inserted
+            }
+            .sorted { lhs, rhs in
+                let lhsRate: Int64 = (lhs.rateToClient ?? 0) + (lhs.rateToPeer ?? 0)
+                let rhsRate: Int64 = (rhs.rateToClient ?? 0) + (rhs.rateToPeer ?? 0)
+                return lhsRate > rhsRate
+            }
     }
 }
 

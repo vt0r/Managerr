@@ -163,21 +163,23 @@ final class TransmissionViewModel {
     }
 
     private func lookupPeerCountries(_ peers: [TransmissionPeer]) async {
-        let unknownPeers = peers.filter { peer in
-            guard let address = peer.address else { return false }
-            return peerCountries[address] == nil
+        let unknownAddresses = peers.compactMap(\.address).filter { peerCountries[$0] == nil }
+        let batches = stride(from: 0, to: unknownAddresses.count, by: 10).map {
+            Array(unknownAddresses[$0 ..< min($0 + 10, unknownAddresses.count)])
         }
-        await withTaskGroup(of: (String, String)?.self) { group in
-            for peer in unknownPeers.prefix(30) {
-                guard let address = peer.address else { continue }
-                group.addTask { [self] in
-                    await self.fetchCountry(for: address)
+        for (index, batch) in batches.enumerated() {
+            await withTaskGroup(of: (String, String)?.self) { group in
+                for address in batch {
+                    group.addTask { [self] in await self.fetchCountry(for: address) }
+                }
+                for await result in group {
+                    if let (ip, country) = result {
+                        peerCountries[ip] = country
+                    }
                 }
             }
-            for await result in group {
-                if let (ip, country) = result {
-                    peerCountries[ip] = country
-                }
+            if index < batches.count - 1 {
+                try? await Task.sleep(for: .seconds(1))
             }
         }
     }
