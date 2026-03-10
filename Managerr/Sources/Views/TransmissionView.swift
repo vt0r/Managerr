@@ -3,6 +3,7 @@ import UniformTypeIdentifiers
 
 struct TransmissionView: View {
     @Environment(SettingsStore.self) private var settings
+    @Environment(\.openURL) private var openURL
     @State private var viewModel = TransmissionViewModel()
     @State private var showFilePicker: Bool = false
     @State private var showMagnetAlert: Bool = false
@@ -29,7 +30,7 @@ struct TransmissionView: View {
             .autocorrectionDisabled(true)
             .textInputAutocapitalization(.never)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Picker("Filter", selection: $viewModel.filterStatus) {
                             ForEach(TransmissionViewModel.FilterStatus.allCases, id: \.self) { status in
@@ -43,15 +44,27 @@ struct TransmissionView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Button {
-                            Task { await viewModel.startAll(settings.config(for: .transmission)) }
+                        Menu {
+                            Button {
+                                Task { await viewModel.startAll(settings.config(for: .transmission)) }
+                            } label: {
+                                Label("Start All", systemImage: "play.fill")
+                            }
+                            Button {
+                                Task { await viewModel.stopAll(settings.config(for: .transmission)) }
+                            } label: {
+                                Label("Stop All", systemImage: "stop.fill")
+                            }
                         } label: {
-                            Label("Start All", systemImage: "play.fill")
+                            Label("Start/Stop All", systemImage: "playpause.fill")
                         }
-                        Button {
-                            Task { await viewModel.stopAll(settings.config(for: .transmission)) }
-                        } label: {
-                            Label("Stop All", systemImage: "stop.fill")
+                        if let url = settings.config(for: .transmission).baseURL {
+                            Divider()
+                            Button {
+                                openURL(url)
+                            } label: {
+                                Label("Open Transmission in Browser", systemImage: "safari")
+                            }
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")

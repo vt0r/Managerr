@@ -3,11 +3,11 @@ import SwiftUI
 struct LidarrView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.openURL) private var openURL
     @State private var viewModel = LidarrViewModel()
     @State private var selectedArtist: LidarrArtist?
     @State private var selectedAlbum: LidarrAlbum?
     @State private var showAddSheet = false
-    @State private var isSpinning = false
 
     private var isRefreshing: Bool { viewModel.isLoading && !viewModel.artists.isEmpty }
 
@@ -55,20 +55,26 @@ struct LidarrView: View {
                     .accessibilityLabel("Sort")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Task { await viewModel.fetchAll(settings.config(for: .lidarr)) }
+                    Menu {
+                        Button {
+                            Task { await viewModel.fetchAll(settings.config(for: .lidarr)) }
+                        } label: {
+                            Label(isRefreshing ? "Refreshing..." : "Refresh", systemImage: "arrow.clockwise")
+                        }
+                        .disabled(isRefreshing)
+                        .accessibilityLabel(isRefreshing ? "Refreshing" : "Refresh")
+                        if let url = settings.config(for: .lidarr).baseURL {
+                            Divider()
+                            Button {
+                                openURL(url)
+                            } label: {
+                                Label("Open Lidarr in Browser", systemImage: "safari")
+                            }
+                        }
                     } label: {
-                        Image(systemName: "arrow.clockwise")
-                            .rotationEffect(.degrees(isSpinning ? 360 : 0))
-                            .animation(
-                                reduceMotion ? nil : (isSpinning ? .linear(duration: 1).repeatForever(autoreverses: false) : .default),
-                                value: isSpinning
-                            )
-                            .opacity(isRefreshing && reduceMotion ? 0.4 : 1)
+                        Image(systemName: "ellipsis.circle")
                     }
-                    .disabled(isRefreshing)
-                    .accessibilityLabel(isRefreshing ? "Refreshing" : "Refresh")
-                    .onChange(of: isRefreshing) { _, refreshing in isSpinning = refreshing }
+                    .accessibilityLabel("Actions")
                 }
             }
             .refreshable {
@@ -79,11 +85,6 @@ struct LidarrView: View {
                 let config = settings.config(for: .lidarr)
                 if viewModel.artists.isEmpty {
                     await viewModel.fetchAll(config)
-                }
-                while !Task.isCancelled {
-                    try? await Task.sleep(for: .seconds(60))
-                    guard !Task.isCancelled else { break }
-                    await viewModel.fetchArtistsSilently(config)
                 }
             }
             .sheet(item: $selectedArtist) { artist in

@@ -8,6 +8,7 @@ struct SeriesDetailSheet: View {
 
     @State private var showDeleteConfirmation: Bool = false
     @State private var localMonitored: Bool
+    @State private var localSeasonMonitored: [Int: Bool]
     @State private var showManualSearch: Bool = false
     @State private var episodes: [SonarrEpisode] = []
     @State private var isLoadingEpisodes: Bool = false
@@ -17,6 +18,9 @@ struct SeriesDetailSheet: View {
         self.series = series
         self.viewModel = viewModel
         _localMonitored = State(initialValue: series.monitored)
+        _localSeasonMonitored = State(initialValue: Dictionary(
+            uniqueKeysWithValues: (series.seasons ?? []).map { ($0.seasonNumber, $0.monitored) }
+        ))
     }
 
     private var baseURL: URL? {
@@ -229,41 +233,61 @@ struct SeriesDetailSheet: View {
 
                     VStack(spacing: 0) {
                         ForEach(seasons) { season in
-                            Button { selectedSeason = season } label: {
-                                HStack(spacing: 8) {
-                                    Circle()
-                                        .fill(season.monitored ? Color.accentColor : Color(.tertiaryLabel))
-                                        .frame(width: 6, height: 6)
+                            let isMonitored = localSeasonMonitored[season.seasonNumber] ?? season.monitored
+                            HStack(spacing: 0) {
+                                Button { selectedSeason = season } label: {
+                                    HStack(spacing: 8) {
+                                        Circle()
+                                            .fill(isMonitored ? Color.accentColor : Color(.tertiaryLabel))
+                                            .frame(width: 6, height: 6)
 
-                                    Text(season.seasonNumber == 0 ? "Specials" : "Season \(season.seasonNumber)")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.tint)
+                                        Text(season.seasonNumber == 0 ? "Specials" : "Season \(season.seasonNumber)")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.tint)
 
-                                    Spacer()
+                                        Spacer()
 
-                                    if let stats = season.statistics {
-                                        let fileCount = stats.episodeFileCount ?? 0
-                                        let total = stats.totalEpisodeCount ?? 0
-                                        Text("\(fileCount)/\(total)")
-                                            .font(.caption)
-                                            .foregroundStyle(fileCount == total && total > 0 ? .green : .secondary)
+                                        if let stats = season.statistics {
+                                            let fileCount = stats.episodeFileCount ?? 0
+                                            let total = stats.totalEpisodeCount ?? 0
+                                            Text("\(fileCount)/\(total)")
+                                                .font(.caption)
+                                                .foregroundStyle(fileCount == total && total > 0 ? .green : .secondary)
 
-                                        if let pct = stats.percentOfEpisodes {
-                                            ProgressView(value: pct / 100)
-                                                .frame(width: 60)
+                                            if let pct = stats.percentOfEpisodes {
+                                                ProgressView(value: pct / 100)
+                                                    .frame(width: 60)
+                                            }
                                         }
-                                    }
 
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .padding(.leading, 12)
+                                    .padding(.trailing, 8)
+                                    .padding(.vertical, 10)
+                                    .contentShape(Rectangle())
                                 }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 10)
-                                .contentShape(Rectangle())
+                                .buttonStyle(.plain)
+                                .accessibilityLabel(season.seasonNumber == 0 ? "Specials" : "Season \(season.seasonNumber)")
+
+                                Button {
+                                    localSeasonMonitored[season.seasonNumber] = !isMonitored
+                                    Task {
+                                        let ok = await viewModel.toggleSeasonMonitored(settings.config(for: .sonarr), show: series, seasonNumber: season.seasonNumber)
+                                        if !ok { localSeasonMonitored[season.seasonNumber] = isMonitored }
+                                        await viewModel.fetchSeriesSilently(settings.config(for: .sonarr))
+                                    }
+                                } label: {
+                                    Image(systemName: isMonitored ? "eye.fill" : "eye.slash")
+                                        .foregroundStyle(isMonitored ? .primary : .secondary)
+                                        .padding(.vertical, 10)
+                                        .padding(.trailing, 12)
+                                }
+                                .buttonStyle(.borderless)
+                                .accessibilityLabel(isMonitored ? "Unmonitor season" : "Monitor season")
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel(season.seasonNumber == 0 ? "Specials" : "Season \(season.seasonNumber)")
 
                             if season.id != seasons.last?.id {
                                 Divider()

@@ -3,10 +3,10 @@ import SwiftUI
 struct SonarrView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.openURL) private var openURL
     @State private var viewModel = SonarrViewModel()
     @State private var selectedSeries: SonarrSeries?
     @State private var showAddSheet = false
-    @State private var isSpinning = false
 
     private var isRefreshing: Bool { viewModel.isLoading && !viewModel.series.isEmpty }
 
@@ -45,20 +45,26 @@ struct SonarrView: View {
                     .accessibilityLabel("Sort")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Task { await viewModel.fetchSeries(settings.config(for: .sonarr)) }
+                    Menu {
+                        Button {
+                            Task { await viewModel.fetchSeries(settings.config(for: .sonarr)) }
+                        } label: {
+                            Label(isRefreshing ? "Refreshing..." : "Refresh", systemImage: "arrow.clockwise")
+                        }
+                        .disabled(isRefreshing)
+                        .accessibilityLabel(isRefreshing ? "Refreshing" : "Refresh")
+                        if let url = settings.config(for: .sonarr).baseURL {
+                            Divider()
+                            Button {
+                                openURL(url)
+                            } label: {
+                                Label("Open Sonarr in Browser", systemImage: "safari")
+                            }
+                        }
                     } label: {
-                        Image(systemName: "arrow.clockwise")
-                            .rotationEffect(.degrees(isSpinning ? 360 : 0))
-                            .animation(
-                                reduceMotion ? nil : (isSpinning ? .linear(duration: 1).repeatForever(autoreverses: false) : .default),
-                                value: isSpinning
-                            )
-                            .opacity(isRefreshing && reduceMotion ? 0.4 : 1)
+                        Image(systemName: "ellipsis.circle")
                     }
-                    .disabled(isRefreshing)
-                    .accessibilityLabel(isRefreshing ? "Refreshing" : "Refresh")
-                    .onChange(of: isRefreshing) { _, refreshing in isSpinning = refreshing }
+                    .accessibilityLabel("Actions")
                 }
             }
             .refreshable {
@@ -69,11 +75,6 @@ struct SonarrView: View {
                 let config = settings.config(for: .sonarr)
                 if viewModel.series.isEmpty {
                     await viewModel.fetchSeries(config)
-                }
-                while !Task.isCancelled {
-                    try? await Task.sleep(for: .seconds(60))
-                    guard !Task.isCancelled else { break }
-                    await viewModel.fetchSeriesSilently(config)
                 }
             }
             .sheet(item: $selectedSeries) { show in

@@ -107,6 +107,32 @@ final class SonarrViewModel {
     }
 
     @discardableResult
+    func toggleSeasonMonitored(_ config: ServerConfig, show: SonarrSeries, seasonNumber: Int) async -> Bool {
+        do {
+            let data = try JSONEncoder().encode(show)
+            var dict = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+            if var seasons = dict["seasons"] as? [[String: Any]] {
+                for i in seasons.indices where (seasons[i]["seasonNumber"] as? Int) == seasonNumber {
+                    seasons[i]["monitored"] = !(seasons[i]["monitored"] as? Bool ?? false)
+                    break
+                }
+                dict["seasons"] = seasons
+            }
+            let body = try JSONSerialization.data(withJSONObject: dict)
+            let url = try makeSeriesURL(config, id: show.id)
+            let responseData = try await NetworkService.shared.requestRaw(url: url, method: "PUT", headers: ["X-Api-Key": config.apiKey, "Accept": "application/json"], body: body)
+            let updated = try JSONDecoder().decode(SonarrSeries.self, from: responseData)
+            if let index = series.firstIndex(where: { $0.id == show.id }) {
+                series[index] = updated
+            }
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    @discardableResult
     func toggleMonitored(_ config: ServerConfig, show: SonarrSeries) async -> Bool {
         do {
             let data = try JSONEncoder().encode(show)

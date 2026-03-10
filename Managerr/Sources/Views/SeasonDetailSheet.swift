@@ -15,6 +15,15 @@ struct SeasonDetailSheet: View {
     @State private var showDeleteSeasonConfirm: Bool = false
     @State private var deletingEpisode: SonarrEpisode?
     @State private var deletedEpisodeFileIds: Set<Int> = []
+    @State private var localMonitored: Bool
+
+    init(season: SonarrSeason, series: SonarrSeries, episodes: [SonarrEpisode], viewModel: SonarrViewModel) {
+        self.season = season
+        self.series = series
+        self.episodes = episodes
+        self.viewModel = viewModel
+        _localMonitored = State(initialValue: season.monitored)
+    }
 
     private var sonarrConfig: ServerConfig { settings.config(for: .sonarr) }
     private var seasonTitle: String {
@@ -76,6 +85,19 @@ struct SeasonDetailSheet: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
                         Menu {
+                            Button {
+                                localMonitored.toggle()
+                                Task {
+                                    let ok = await viewModel.toggleSeasonMonitored(sonarrConfig, show: series, seasonNumber: season.seasonNumber)
+                                    if !ok { localMonitored.toggle() }
+                                    await viewModel.fetchSeriesSilently(sonarrConfig)
+                                }
+                            } label: {
+                                Label(localMonitored ? "Unmonitor Season" : "Monitor Season", systemImage: localMonitored ? "eye.slash" : "eye")
+                            }
+
+                            Divider()
+
                             Button(role: .destructive) {
                                 showDeleteSeasonConfirm = true
                             } label: {
