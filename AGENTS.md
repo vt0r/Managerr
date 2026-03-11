@@ -74,7 +74,7 @@ All use `@Observable` (not `ObservableObject`). Key patterns:
 - `filteredMovies`/`filteredSeries`/etc. are computed properties applying search + sort
 - Sort orders are nested enums on each ViewModel
 - `LidarrViewModel` has a `viewMode` (Artists vs Albums) and fetches both concurrently with `async let`
-- `TransmissionViewModel` tracks `filterStatus` (All/Downloading/Seeding/Stopped) and exposes aggregate `totalDownloadSpeed`/`totalUploadSpeed`
+- `TransmissionViewModel` tracks `filterStatus` (All/Downloading/Seeding/Stopped) and exposes aggregate `totalDownloadSpeed`/`totalUploadSpeed`. `peerCountries: [String: String]` caches IP → country code lookups (batched at 10/s via `api.country.is`). `detailedTorrent` is populated by `fetchTorrentDetail` which is called once on sheet open then polled every 5 seconds.
 
 ## Views
 
@@ -82,15 +82,19 @@ All use `@Observable` (not `ObservableObject`). Key patterns:
 - Detail views are presented as sheets (`.sheet`), not pushed navigation
 - Grids use `LazyVGrid` with adaptive columns (`minimum: 110`)
 - Settings are in `SettingsView` + `ServiceConfigSheet`; connection testing is done inline
+- **`ManualSearchView`** — generic sheet for browsing and grabbing indexer releases; used by movie, season, episode, and album detail sheets
+- **`SeasonDetailSheet`** — episode list for a single season; supports per-episode and per-season monitored toggling, file deletion, and manual/auto search
+- **`ReleaseModels`** (`Models/ReleaseModels.swift`) — shared `Decodable` structs for Radarr/Sonarr/Lidarr release responses
 
 ## API Endpoints Used
 
 | Service | Base path | Auth |
 | ------- | --------- | ---- |
-| Radarr | `/api/v3/movie`, `/api/v3/movie/lookup`, `/api/v3/command`, `/api/v3/rootfolder`, `/api/v3/qualityprofile` | `X-Api-Key` header |
-| Sonarr | `/api/v3/series`, `/api/v3/series/lookup`, `/api/v3/episode` | `X-Api-Key` header |
-| Lidarr | `/api/v1/artist`, `/api/v1/artist/lookup`, `/api/v1/album` | `X-Api-Key` header |
+| Radarr | `/api/v3/movie`, `/api/v3/movie/lookup`, `/api/v3/command`, `/api/v3/rootfolder`, `/api/v3/qualityprofile`, `/api/v3/release` | `X-Api-Key` header |
+| Sonarr | `/api/v3/series`, `/api/v3/series/lookup`, `/api/v3/episode`, `/api/v3/episodefile`, `/api/v3/episodefile/bulk`, `/api/v3/release` | `X-Api-Key` header |
+| Lidarr | `/api/v1/artist`, `/api/v1/artist/lookup`, `/api/v1/album`, `/api/v1/track`, `/api/v1/trackfile`, `/api/v1/release` | `X-Api-Key` header |
 | Transmission | `/transmission/rpc` | Basic auth + session ID |
+| api.country.is | `/{ip}` | None (rate-limited to 10 req/s in batches) |
 
 ## Accessibility Standards
 
