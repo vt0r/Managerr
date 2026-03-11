@@ -2,13 +2,16 @@
 
 A native iOS/macOS app that brings Radarr, Sonarr, Lidarr, and Transmission together in one clean dashboard.
 
+<!-- markdownlint-disable MD033 -->
+[<img src=".resources/Download_on_the_App_Store_Badge_US-UK_RGB_blk_092917.svg" alt="Download Managerr on the App Store">](https://apps.apple.com/us/app/managerr-app/id6759478095)
+<!-- markdownlint-enable MD033 -->
+
 ## Features
 
 - **Movies** — Browse your Radarr library, toggle monitoring, trigger auto or manual searches, and add new movies
 - **TV Shows** — View your Sonarr series, drill into seasons and episodes, toggle monitoring per season or episode, and trigger searches
 - **Music** — Explore artists and albums via Lidarr, monitor releases, and search for missing albums
 - **Downloads** — Monitor active Transmission torrents with live-updating per-torrent details, peers (with optional country flags), and trackers
-- **Search** — Search across all three Arr services at once and add new content directly from results
 - **Settings** — Configure each service independently with built-in connection testing
 - **Open in Browser** — Each service tab has an option to open the service's web UI in your default browser - if you find yourself using this often, please [create an issue](https://github.com/vt0r/Managerr/issues/new/choose) to let us know which feature(s) is (are) missing!
 
