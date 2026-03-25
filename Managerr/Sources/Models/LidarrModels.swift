@@ -42,6 +42,13 @@ nonisolated struct LidarrArtist: Codable, Identifiable, Sendable, Hashable {
     }
 
     func posterURL(config: ServerConfig) -> URL? {
+        // Lookup results have id == 0; use remoteUrl from images array instead
+        if id == 0 {
+            let remoteURL = images?.first(where: { $0.coverType == "poster" })?.remoteUrl
+                ?? images?.first?.remoteUrl
+            if let urlString = remoteURL { return URL(string: urlString) }
+            return nil
+        }
         guard let baseURL = config.baseURL else { return nil }
         var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)
         components?.path = "/api/v1/MediaCover/Artist/\(id)/poster.jpg"
