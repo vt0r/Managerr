@@ -4,6 +4,12 @@ struct SettingsView: View {
     @Environment(SettingsStore.self) private var settings
     @State private var editingConfig: ServerConfig?
 
+    private var appVersion: String {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        return "\(version) (\(build))"
+    }
+
     private var defaultTabOptions: [TabSelection] {
         [.movies, .tvShows, .music, .downloads]
     }
@@ -70,6 +76,27 @@ struct SettingsView: View {
                     }
                 } header: {
                     Text("Resources")
+                }
+
+                Section {
+                    HStack {
+                        Text("Version")
+                        Spacer()
+                        Text(appVersion)
+                            .foregroundStyle(.secondary)
+                    }
+                    Link(destination: URL(string: "https://github.com/vt0r/Managerr")!) {
+                        Label("View on GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
+                    }
+                    Link(destination: URL(string: "https://apps.apple.com/app/id6759478095")!) {
+                        Label("Rate on App Store", systemImage: "star")
+                    }
+                } header: {
+                    Text("About")
+                } footer: {
+                    Text("© 2025–2026 Salvatore LaMendola. All rights reserved.")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .textCase(nil)
                 }
             }
             .navigationTitle("Settings")

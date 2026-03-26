@@ -3,7 +3,7 @@
 A native iOS/macOS app that brings Radarr, Sonarr, Lidarr, and Transmission together in one clean dashboard.
 
 <!-- markdownlint-disable MD033 -->
-[<img src=".resources/Download_on_the_App_Store_Badge_US-UK_RGB_blk_092917.svg" alt="Download Managerr on the App Store">](https://apps.apple.com/us/app/managerr-app/id6759478095)
+[<img src=".resources/Download_on_the_App_Store_Badge_US-UK_RGB_blk_092917.svg" alt="Download Managerr on the App Store">](https://apps.apple.com/app/id6759478095)
 <!-- markdownlint-enable MD033 -->
 
 ## Features
