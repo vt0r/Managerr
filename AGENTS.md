@@ -39,9 +39,8 @@ xcodebuild test -project Managerr.xcodeproj -scheme Managerr -destination 'platf
 
 ``` txt
 Managerr/Sources/
-├── MediaDashboardApp.swift       # App entry point, injects SettingsStore into environment
+├── ManagerrApp.swift             # App entry point, injects SettingsStore into environment
 ├── ContentView.swift             # Root TabView (Movies, TV, Music, Torrents, Search, Settings)
-├── Config.swift                  # Empty placeholder for future build-time config
 ├── Models/                       # Decodable structs matching API response shapes
 ├── Services/                     # Network layer (singletons)
 ├── ViewModels/                   # @Observable classes; own business logic and state

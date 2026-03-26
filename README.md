@@ -15,9 +15,13 @@ A native iOS/macOS app that brings Radarr, Sonarr, Lidarr, and Transmission toge
 - **Settings** — Configure each service independently with built-in connection testing
 - **Open in Browser** — Each service tab has an option to open the service's web UI in your default browser - if you find yourself using this often, please [create an issue](https://github.com/vt0r/Managerr/issues/new/choose) to let us know which feature(s) is (are) missing!
 
-## Requirements
+## Development and Contributing
 
-- iOS 17+ or macOS 14+ (runs like an iPad app on macOS)
+If you'd like to contribute to this project, or if you just want to build and run it locally, please review the following information. Please do not forget to read the [Accessibility](#accessibility) section below also! Thank you in advance for any help you're able to provide with this project, be it creating PRs to add functionality, creating issues to report problems or to make feature requests, or just simply providing feedback. It is much appreciated in any (polite and courteous) form, and we love to hear from you.
+
+### Requirements
+
+- iOS 18+ or macOS 14+ (runs like an iPad app on macOS)
 - Xcode 15+
 - One or more self-hosted services:
   - [Radarr](https://radarr.video)
@@ -27,7 +31,7 @@ A native iOS/macOS app that brings Radarr, Sonarr, Lidarr, and Transmission toge
 
 You can use the app with any combination of the above services — just enable the ones you have.
 
-## Getting Started
+### Getting Started
 
 1. Clone the repo and open `Managerr.xcodeproj` in Xcode
 2. Select your target device or simulator and run
@@ -35,7 +39,7 @@ You can use the app with any combination of the above services — just enable t
 4. Tap a service, enter its URL and credentials, then tap **Test Connection** to verify
 5. Tap **Save** — the service is now live
 
-### Service URLs
+#### Service URLs
 
 Enter the full URL including protocol and port (unless it's port `80` or `443`). Examples:
 
@@ -51,7 +55,7 @@ https://192.168.1.10/radarr
 http://192.168.1.10:7878
 ```
 
-### Credentials
+#### Credentials
 
 | Service | Credential |
 | ------- | ---------- |
@@ -60,19 +64,7 @@ http://192.168.1.10:7878
 | Lidarr | API Key (found in `Settings → General`) |
 | Transmission | `username:password` (leave blank if RPC auth is disabled) |
 
-## Building from the Command Line
-
-``` bash
-# Build
-xcodebuild -project Managerr.xcodeproj -scheme Managerr \
-  -destination 'platform=iOS Simulator,name=iPhone 16' build
-
-# Run tests
-xcodebuild test -project Managerr.xcodeproj -scheme Managerr \
-  -destination 'platform=iOS Simulator,name=iPhone 16'
-```
-
-## Project Structure
+### Project Structure
 
 ``` txt
 Managerr/Sources/
@@ -87,11 +79,11 @@ Managerr/Sources/
 
 No external dependencies — pure Swift, SwiftUI, and Foundation.
 
-## Accessibility
+### Accessibility
 
 Managerr targets full VoiceOver support and Dynamic Type compatibility at the minimum, and we will continue working to support more accessibility features as time goes on. We ask all contributors to please keep the following guidelines in mind to help us maintain (or improve!) our accessibility.
 
-### Guidelines
+#### Guidelines
 
 **Every interactive element should be labelled.**
 Buttons, toggles, and tappable cards that rely on an icon or image alone need `.accessibilityLabel("…")`. Prefer concise noun/verb phrases ("Toggle monitoring", "Play trailer").
