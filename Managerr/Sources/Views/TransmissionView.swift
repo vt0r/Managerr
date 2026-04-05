@@ -98,15 +98,32 @@ struct TransmissionView: View {
                 } else {
                     ToolbarItem(placement: .topBarTrailing) {
                         Menu {
-                            Picker("Filter", selection: $viewModel.filterStatus) {
+                            Section("Sort By") {
+                                ForEach(TransmissionViewModel.SortOption.allCases, id: \.self) { option in
+                                    Button {
+                                        if viewModel.sortOption == option {
+                                            viewModel.sortAscending.toggle()
+                                        } else {
+                                            viewModel.sortOption = option
+                                        }
+                                    } label: {
+                                        sortOptionLabel(option)
+                                    }
+                                }
+                            }
+                            Section("Filter") {
                                 ForEach(TransmissionViewModel.FilterStatus.allCases, id: \.self) { status in
-                                    Text(status.rawValue).tag(status)
+                                    Button {
+                                        viewModel.filterStatus = status
+                                    } label: {
+                                        filterStatusLabel(status)
+                                    }
                                 }
                             }
                         } label: {
-                            Image(systemName: "line.3.horizontal.decrease.circle")
+                            Image(systemName: "arrow.up.arrow.down")
                         }
-                        .accessibilityLabel("Filter")
+                        .accessibilityLabel("Sort and Filter")
                     }
                     ToolbarItem(placement: .topBarTrailing) {
                         Menu {
@@ -393,6 +410,24 @@ struct TransmissionView: View {
             Label("Transmission Not Configured", systemImage: "arrow.down.circle")
         } description: {
             Text("Add your Transmission server URL in Settings to get started.")
+        }
+    }
+
+    @ViewBuilder
+    private func sortOptionLabel(_ option: TransmissionViewModel.SortOption) -> some View {
+        if viewModel.sortOption == option {
+            Label(option.rawValue, systemImage: viewModel.sortAscending ? "arrow.up" : "arrow.down")
+        } else {
+            Text(option.rawValue)
+        }
+    }
+
+    @ViewBuilder
+    private func filterStatusLabel(_ status: TransmissionViewModel.FilterStatus) -> some View {
+        if viewModel.filterStatus == status {
+            Label(status.rawValue, systemImage: "checkmark")
+        } else {
+            Text(status.rawValue)
         }
     }
 

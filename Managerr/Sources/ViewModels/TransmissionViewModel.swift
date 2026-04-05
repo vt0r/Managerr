@@ -8,6 +8,8 @@ final class TransmissionViewModel {
     var errorMessage: String?
     var searchText: String = ""
     var filterStatus: FilterStatus = .all
+    var sortOption: SortOption = .dateAdded
+    var sortAscending: Bool = false
     var detailedTorrent: TransmissionTorrent?
     var peerCountries: [String: String] = [:]
 
@@ -16,6 +18,15 @@ final class TransmissionViewModel {
         case downloading = "Downloading"
         case seeding = "Seeding"
         case stopped = "Stopped"
+    }
+
+    enum SortOption: String, CaseIterable {
+        case name = "Name"
+        case dateAdded = "Date Added"
+        case size = "Size"
+        case progress = "Progress"
+        case ratio = "Ratio"
+        case speed = "Speed"
     }
 
     var filteredTorrents: [TransmissionTorrent] {
@@ -35,7 +46,25 @@ final class TransmissionViewModel {
             result = result.filter { $0.status == 0 }
         }
 
-        return result.sorted { ($0.addedDate ?? 0) > ($1.addedDate ?? 0) }
+        result.sort { a, b in
+            let ascending: Bool
+            switch sortOption {
+            case .name:
+                ascending = (a.name ?? "").localizedStandardCompare(b.name ?? "") == .orderedAscending
+            case .dateAdded:
+                ascending = (a.addedDate ?? 0) < (b.addedDate ?? 0)
+            case .size:
+                ascending = (a.totalSize ?? 0) < (b.totalSize ?? 0)
+            case .progress:
+                ascending = (a.percentDone ?? 0) < (b.percentDone ?? 0)
+            case .ratio:
+                ascending = (a.uploadRatio ?? -1) < (b.uploadRatio ?? -1)
+            case .speed:
+                ascending = (a.rateDownload ?? 0) < (b.rateDownload ?? 0)
+            }
+            return sortAscending ? ascending : !ascending
+        }
+        return result
     }
 
     var totalDownloadSpeed: Int64 {

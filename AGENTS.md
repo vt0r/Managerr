@@ -73,7 +73,7 @@ All use `@Observable` (not `ObservableObject`). Key patterns:
 - `filteredMovies`/`filteredSeries`/etc. are computed properties applying search + sort
 - Sort orders are nested enums on each ViewModel
 - `LidarrViewModel` has a `viewMode` (Artists vs Albums) and fetches both concurrently with `async let`
-- `TransmissionViewModel` tracks `filterStatus` (All/Downloading/Seeding/Stopped) and exposes aggregate `totalDownloadSpeed`/`totalUploadSpeed`. `peerCountries: [String: String]` caches IP → country code lookups (batched at 10/s via `api.country.is`). `detailedTorrent` is populated by `fetchTorrentDetail` which is called once on sheet open then polled every 5 seconds.
+- `TransmissionViewModel` tracks `filterStatus` (All/Downloading/Seeding/Stopped), `sortOption` (Name/DateAdded/Size/Progress/Ratio/Speed), and `sortAscending`. Exposes aggregate `totalDownloadSpeed`/`totalUploadSpeed`. `peerCountries: [String: String]` caches IP → country code lookups (batched at 10/s via `api.country.is`). `detailedTorrent` is populated by `fetchTorrentDetail` which is called once on sheet open then polled every 5 seconds.
 
 ## Views
 
