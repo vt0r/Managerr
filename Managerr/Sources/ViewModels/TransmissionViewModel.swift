@@ -140,6 +140,37 @@ final class TransmissionViewModel {
         }
     }
 
+    func startSelected(_ config: ServerConfig, ids: Set<Int>) async {
+        let stoppedIDs = torrents.filter { ids.contains($0.id) && $0.status == 0 }.map(\.id)
+        guard !stoppedIDs.isEmpty else { return }
+        do {
+            try await TransmissionService.shared.startTorrent(config, ids: stoppedIDs)
+            await fetchTorrents(config)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func stopSelected(_ config: ServerConfig, ids: Set<Int>) async {
+        let activeIDs = torrents.filter { ids.contains($0.id) && $0.isActive }.map(\.id)
+        guard !activeIDs.isEmpty else { return }
+        do {
+            try await TransmissionService.shared.stopTorrent(config, ids: activeIDs)
+            await fetchTorrents(config)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func removeSelected(_ config: ServerConfig, ids: Set<Int>, deleteData: Bool) async {
+        do {
+            try await TransmissionService.shared.removeTorrent(config, ids: Array(ids), deleteData: deleteData)
+            torrents.removeAll { ids.contains($0.id) }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     func startAll(_ config: ServerConfig) async {
         let ids = torrents.filter { $0.status == 0 }.map(\.id)
         guard !ids.isEmpty else { return }

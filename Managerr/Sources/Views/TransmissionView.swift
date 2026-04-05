@@ -11,6 +11,15 @@ struct TransmissionView: View {
     @State private var magnetLink: String = ""
     @State private var torrentURLString: String = ""
     @State private var selectedTorrent: TransmissionTorrent?
+    @State private var isSelecting: Bool = false
+    @State private var selectedIDs: Set<Int> = []
+    @State private var showBulkRemoveConfirm: Bool = false
+    @State private var showBulkRemoveWithDataConfirm: Bool = false
+
+    private var selectionTitle: String {
+        guard isSelecting else { return "Downloads" }
+        return selectedIDs.isEmpty ? "Select Items" : "\(selectedIDs.count) Selected"
+    }
 
     var body: some View {
         NavigationStack {
@@ -25,51 +34,115 @@ struct TransmissionView: View {
                     torrentList
                 }
             }
-            .navigationTitle("Downloads")
+            .navigationTitle(selectionTitle)
             .searchable(text: $viewModel.searchText, prompt: "Search torrents")
             .autocorrectionDisabled(true)
             .textInputAutocapitalization(.never)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Picker("Filter", selection: $viewModel.filterStatus) {
-                            ForEach(TransmissionViewModel.FilterStatus.allCases, id: \.self) { status in
-                                Text(status.rawValue).tag(status)
-                            }
+                if isSelecting {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Cancel") {
+                            withAnimation { isSelecting = false; selectedIDs = [] }
                         }
-                    } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
                     }
-                    .accessibilityLabel("Filter")
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
+                    ToolbarItem(placement: .topBarTrailing) {
                         Menu {
                             Button {
-                                Task { await viewModel.startAll(settings.config(for: .transmission)) }
+                                let ids = selectedIDs
+                                withAnimation { isSelecting = false; selectedIDs = [] }
+                                Task { await viewModel.startSelected(settings.config(for: .transmission), ids: ids) }
                             } label: {
-                                Label("Start All", systemImage: "play.fill")
+                                Label("Start", systemImage: "play.fill")
                             }
+                            .disabled(selectedIDs.isEmpty)
                             Button {
-                                Task { await viewModel.stopAll(settings.config(for: .transmission)) }
+                                let ids = selectedIDs
+                                withAnimation { isSelecting = false; selectedIDs = [] }
+                                Task { await viewModel.stopSelected(settings.config(for: .transmission), ids: ids) }
                             } label: {
-                                Label("Stop All", systemImage: "stop.fill")
+                                Label("Stop", systemImage: "stop.fill")
+                            }
+                            .disabled(selectedIDs.isEmpty)
+                            Divider()
+                            Button(role: .destructive) {
+                                showBulkRemoveConfirm = true
+                            } label: {
+                                Label("Remove…", systemImage: "trash")
+                            }
+                            .disabled(selectedIDs.isEmpty)
+                            Button(role: .destructive) {
+                                showBulkRemoveWithDataConfirm = true
+                            } label: {
+                                Label("Remove with Data…", systemImage: "trash.fill")
+                            }
+                            .disabled(selectedIDs.isEmpty)
+                            Divider()
+                            if selectedIDs.count == viewModel.filteredTorrents.count {
+                                Button {
+                                    selectedIDs = []
+                                } label: {
+                                    Label("Deselect All", systemImage: "circle")
+                                }
+                            } else {
+                                Button {
+                                    selectedIDs = Set(viewModel.filteredTorrents.map(\.id))
+                                } label: {
+                                    Label("Select All", systemImage: "checkmark.circle")
+                                }
                             }
                         } label: {
-                            Label("Start/Stop All", systemImage: "playpause.fill")
+                            Image(systemName: "ellipsis.circle")
                         }
-                        if let url = settings.config(for: .transmission).baseURL {
-                            Divider()
-                            Button {
-                                openURL(url)
-                            } label: {
-                                Label("Open Transmission in Browser", systemImage: "safari")
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
+                        .accessibilityLabel(selectedIDs.isEmpty ? "Actions" : "\(selectedIDs.count) Selected")
                     }
-                    .accessibilityLabel("Actions")
+                } else {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Menu {
+                            Picker("Filter", selection: $viewModel.filterStatus) {
+                                ForEach(TransmissionViewModel.FilterStatus.allCases, id: \.self) { status in
+                                    Text(status.rawValue).tag(status)
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
+                        }
+                        .accessibilityLabel("Filter")
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Menu {
+                            Button {
+                                withAnimation { isSelecting = true }
+                            } label: {
+                                Label("Select Torrents", systemImage: "checkmark.circle")
+                            }
+                            Divider()
+                            Menu {
+                                Button {
+                                    Task { await viewModel.startAll(settings.config(for: .transmission)) }
+                                } label: {
+                                    Label("Start All", systemImage: "play.fill")
+                                }
+                                Button {
+                                    Task { await viewModel.stopAll(settings.config(for: .transmission)) }
+                                } label: {
+                                    Label("Stop All", systemImage: "stop.fill")
+                                }
+                            } label: {
+                                Label("Start/Stop All", systemImage: "playpause.fill")
+                            }
+                            if let url = settings.config(for: .transmission).baseURL {
+                                Divider()
+                                Button {
+                                    openURL(url)
+                                } label: {
+                                    Label("Open Transmission in Browser", systemImage: "safari")
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                        }
+                        .accessibilityLabel("Actions")
+                    }
                 }
             }
             .refreshable {
@@ -127,11 +200,39 @@ struct TransmissionView: View {
                 guard let data = try? Data(contentsOf: url) else { return }
                 Task { await viewModel.addTorrentFile(settings.config(for: .transmission), data: data) }
             }
+            .confirmationDialog(
+                "Remove \(selectedIDs.count) torrent\(selectedIDs.count == 1 ? "" : "s")?",
+                isPresented: $showBulkRemoveConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Remove", role: .destructive) {
+                    let ids = selectedIDs
+                    withAnimation { isSelecting = false; selectedIDs = [] }
+                    Task { await viewModel.removeSelected(settings.config(for: .transmission), ids: ids, deleteData: false) }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Torrent files will be kept on disk.")
+            }
+            .confirmationDialog(
+                "Remove \(selectedIDs.count) torrent\(selectedIDs.count == 1 ? "" : "s") and delete all data?",
+                isPresented: $showBulkRemoveWithDataConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Remove and Delete Data", role: .destructive) {
+                    let ids = selectedIDs
+                    withAnimation { isSelecting = false; selectedIDs = [] }
+                    Task { await viewModel.removeSelected(settings.config(for: .transmission), ids: ids, deleteData: true) }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("All downloaded files will be permanently deleted.")
+            }
             .sheet(item: $selectedTorrent) { torrent in
                 TorrentDetailSheet(torrent: torrent, viewModel: viewModel)
             }
             .overlay(alignment: .bottomTrailing) {
-                if settings.isConfigured(.transmission) &&
+                if settings.isConfigured(.transmission) && !isSelecting &&
                    !(viewModel.isLoading && viewModel.torrents.isEmpty) &&
                    !(viewModel.errorMessage != nil && viewModel.torrents.isEmpty) {
                     Menu {
@@ -199,22 +300,53 @@ struct TransmissionView: View {
     @ViewBuilder
     private func torrentCell(_ torrent: TransmissionTorrent) -> some View {
         let config = settings.config(for: .transmission)
-        Button { selectedTorrent = torrent } label: {
-            TorrentRow(torrent: torrent, onToggle: {
-                Task {
-                    if torrent.status == 0 {
-                        await viewModel.startTorrent(config, id: torrent.id)
-                    } else {
-                        await viewModel.stopTorrent(config, id: torrent.id)
-                    }
+        let isSelected = selectedIDs.contains(torrent.id)
+        Button {
+            if isSelecting {
+                if isSelected { selectedIDs.remove(torrent.id) } else { selectedIDs.insert(torrent.id) }
+            } else {
+                selectedTorrent = torrent
+            }
+        } label: {
+            HStack(spacing: 0) {
+                if isSelecting {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.title3)
+                        .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
+                        .padding(.trailing, 12)
+                        .animation(.easeInOut(duration: 0.15), value: isSelected)
                 }
-            })
+                TorrentRow(
+                    torrent: torrent,
+                    onToggle: isSelecting ? nil : {
+                        Task {
+                            if torrent.status == 0 {
+                                await viewModel.startTorrent(config, id: torrent.id)
+                            } else {
+                                await viewModel.stopTorrent(config, id: torrent.id)
+                            }
+                        }
+                    }
+                )
+            }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isSelected ? Color.accentColor.opacity(0.12) : Color(.secondarySystemBackground))
+            )
         }
         .buttonStyle(.plain)
         .contextMenu {
+            if !isSelecting {
+                Button {
+                    withAnimation { isSelecting = true }
+                    selectedIDs = [torrent.id]
+                } label: {
+                    Label("Select", systemImage: "checkmark.circle")
+                }
+                Divider()
+            }
             if torrent.status == 0 {
                 Button {
                     Task { await viewModel.startTorrent(config, id: torrent.id) }
@@ -280,7 +412,7 @@ struct TransmissionView: View {
 
 struct TorrentRow: View {
     let torrent: TransmissionTorrent
-    let onToggle: () -> Void
+    let onToggle: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -298,17 +430,19 @@ struct TorrentRow: View {
                 ProgressView(value: torrent.percentDone ?? 0)
                     .tint(statusColor)
 
-                Button {
-                    onToggle()
-                } label: {
-                    Image(systemName: torrent.status == 0 ? "play.circle.fill" : "pause.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(.tint)
+                if let onToggle {
+                    Button {
+                        onToggle()
+                    } label: {
+                        Image(systemName: torrent.status == 0 ? "play.circle.fill" : "pause.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(.tint)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+                    .accessibilityLabel(torrent.status == 0 ? "Start" : "Pause")
                 }
-                .buttonStyle(.plain)
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
-                .accessibilityLabel(torrent.status == 0 ? "Start" : "Pause")
             }
 
             HStack {
