@@ -1,4 +1,4 @@
-# Managerr
+# [Managerr](https://managerr.app)
 
 A native iOS/macOS app that brings Radarr, Sonarr, Lidarr, and Transmission together in one clean dashboard.
 

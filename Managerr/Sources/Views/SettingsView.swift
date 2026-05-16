@@ -85,8 +85,11 @@ struct SettingsView: View {
                         Text(appVersion)
                             .foregroundStyle(.secondary)
                     }
+                    Link(destination: URL(string: "https://managerr.app")!) {
+                        Label("Visit Managerr Website", systemImage: "safari")
+                    }
                     Link(destination: URL(string: "https://github.com/vt0r/Managerr")!) {
-                        Label("View on GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
+                        Label("View Source on GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
                     }
                     Link(destination: URL(string: "https://apps.apple.com/app/id6759478095")!) {
                         Label("Rate on App Store", systemImage: "star")
