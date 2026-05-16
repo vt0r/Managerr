@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 nonisolated struct TransmissionRPCRequest: Codable, Sendable {
     let method: String
@@ -50,6 +51,7 @@ nonisolated struct TransmissionTorrent: Codable, Identifiable, Sendable {
     let comment: String?
     let isPrivate: Bool?
     let magnetLink: String?
+    let desiredAvailable: Int64?
 
     var statusText: String {
         switch status {
@@ -76,6 +78,22 @@ nonisolated struct TransmissionTorrent: Codable, Identifiable, Sendable {
 
     var isActive: Bool {
         status == 4 || status == 6
+    }
+
+    var availability: Double? {
+        guard let downloaded = downloadedEver,
+              let desired = desiredAvailable,
+              let size = sizeWhenDone, size > 0 else { return nil }
+        return min(Double(downloaded + desired) / Double(size), 1.0)
+    }
+
+    var statusColor: Color {
+        switch status {
+        case 4: .blue      // downloading
+        case 6: .green     // seeding
+        case 0: Color(.tertiaryLabel)  // stopped
+        default: .orange   // queued / verifying
+        }
     }
 }
 

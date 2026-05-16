@@ -24,7 +24,7 @@ actor TransmissionService {
         "peersSendingToUs", "peersGettingFromUs", "hashString",
         "peers", "trackers", "trackerStats", "files", "fileStats",
         "pieceCount", "pieceSize", "creator", "comment", "isPrivate",
-        "magnetLink"
+        "magnetLink", "desiredAvailable"
     ]
 
     private func rpcURL(_ config: ServerConfig) throws -> URL {

@@ -118,11 +118,11 @@ struct TorrentDetailSheet: View {
                 HStack(spacing: 20) {
                     if let dl = detail.rateDownload, dl > 0 {
                         Label(FormatUtils.speed(dl), systemImage: "arrow.down.circle.fill")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(.blue)
                     }
                     if let ul = detail.rateUpload, ul > 0 {
                         Label(FormatUtils.speed(ul), systemImage: "arrow.up.circle.fill")
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(.green)
                     }
                     Spacer()
                     if let eta = detail.eta, eta > 0 {
@@ -159,6 +159,9 @@ struct TorrentDetailSheet: View {
                 }
                 if let left = detail.leftUntilDone, left > 0 {
                     statCell("Remaining", FormatUtils.fileSize(left))
+                }
+                if let avail = detail.availability {
+                    statCell("Availability", FormatUtils.percentage(avail))
                 }
                 if let selected = detail.sizeWhenDone, let total = detail.totalSize, selected != total {
                     statCell("Selected", FormatUtils.fileSize(selected))
@@ -387,15 +390,7 @@ struct TorrentDetailSheet: View {
         .font(.subheadline)
     }
 
-    private var statusColor: Color {
-        switch detail.status {
-        case 0: return .orange
-        case 1, 2: return .blue
-        case 3, 4: return .green
-        case 5, 6: return .purple
-        default: return .secondary
-        }
-    }
+    private var statusColor: Color { detail.statusColor }
 
     private func fileName(_ path: String?) -> String {
         guard let path else { return "Unknown" }

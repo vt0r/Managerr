@@ -94,7 +94,9 @@ struct LidarrView: View {
                 AlbumDetailSheet(album: album, viewModel: viewModel)
             }
             .sheet(isPresented: $showAddSheet) {
-                ArtistLookupView()
+                ArtistLookupView(onAdded: {
+                    Task { await viewModel.fetchAll(settings.config(for: .lidarr)) }
+                })
             }
             .overlay(alignment: .bottomTrailing) {
                 if settings.isConfigured(.lidarr) &&

@@ -7,6 +7,7 @@ struct AddMovieSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     let movie: RadarrMovie
+    var onAdded: () -> Void = {}
 
     @State private var rootFolders: [RadarrRootFolder] = []
     @State private var qualityProfiles: [RadarrQualityProfile] = []
@@ -166,6 +167,11 @@ struct AddMovieSheet: View {
             let body = try JSONSerialization.data(withJSONObject: dict)
             try await ArrService.shared.addRadarrMovie(config, movie: body)
             didAdd = true
+            isAdding = false
+            try? await Task.sleep(for: .milliseconds(600))
+            dismiss()
+            onAdded()
+            return
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -180,6 +186,7 @@ struct AddSeriesSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     let series: SonarrSeries
+    var onAdded: () -> Void = {}
 
     @State private var rootFolders: [SonarrRootFolder] = []
     @State private var qualityProfiles: [SonarrQualityProfile] = []
@@ -347,6 +354,11 @@ struct AddSeriesSheet: View {
             let body = try JSONSerialization.data(withJSONObject: dict)
             try await ArrService.shared.addSonarrSeries(config, series: body)
             didAdd = true
+            isAdding = false
+            try? await Task.sleep(for: .milliseconds(600))
+            dismiss()
+            onAdded()
+            return
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -361,6 +373,7 @@ struct AddArtistSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     let artist: LidarrArtist
+    var onAdded: () -> Void = {}
 
     @State private var rootFolders: [LidarrRootFolder] = []
     @State private var qualityProfiles: [LidarrQualityProfile] = []
@@ -531,6 +544,11 @@ struct AddArtistSheet: View {
             let body = try JSONSerialization.data(withJSONObject: dict)
             try await ArrService.shared.addLidarrArtist(config, artist: body)
             didAdd = true
+            isAdding = false
+            try? await Task.sleep(for: .milliseconds(600))
+            dismiss()
+            onAdded()
+            return
         } catch {
             errorMessage = error.localizedDescription
         }

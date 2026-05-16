@@ -81,7 +81,9 @@ struct RadarrView: View {
                 MovieDetailSheet(movie: movie, viewModel: viewModel)
             }
             .sheet(isPresented: $showAddSheet) {
-                MovieLookupView()
+                MovieLookupView(onAdded: {
+                    Task { await viewModel.fetchMovies(settings.config(for: .radarr)) }
+                })
             }
             .overlay(alignment: .bottomTrailing) {
                 if settings.isConfigured(.radarr) &&

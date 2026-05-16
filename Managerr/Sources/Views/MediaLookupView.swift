@@ -6,6 +6,8 @@ struct MovieLookupView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(\.dismiss) private var dismiss
 
+    var onAdded: () -> Void = {}
+
     @State private var searchText = ""
     @State private var results: [RadarrMovie] = []
     @State private var isSearching = false
@@ -69,7 +71,7 @@ struct MovieLookupView: View {
                 }
             }
             .sheet(item: $selectedMovie) { movie in
-                AddMovieSheet(movie: movie)
+                AddMovieSheet(movie: movie, onAdded: { dismiss(); onAdded() })
             }
         }
     }
@@ -143,6 +145,8 @@ struct SeriesLookupView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(\.dismiss) private var dismiss
 
+    var onAdded: () -> Void = {}
+
     @State private var searchText = ""
     @State private var results: [SonarrSeries] = []
     @State private var isSearching = false
@@ -206,7 +210,7 @@ struct SeriesLookupView: View {
                 }
             }
             .sheet(item: $selectedSeries) { series in
-                AddSeriesSheet(series: series)
+                AddSeriesSheet(series: series, onAdded: { dismiss(); onAdded() })
             }
         }
     }
@@ -281,6 +285,8 @@ struct ArtistLookupView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(\.dismiss) private var dismiss
 
+    var onAdded: () -> Void = {}
+
     @State private var searchText = ""
     @State private var results: [LidarrArtist] = []
     @State private var isSearching = false
@@ -344,7 +350,7 @@ struct ArtistLookupView: View {
                 }
             }
             .sheet(item: $selectedArtist) { artist in
-                AddArtistSheet(artist: artist)
+                AddArtistSheet(artist: artist, onAdded: { dismiss(); onAdded() })
             }
         }
     }

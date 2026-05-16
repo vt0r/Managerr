@@ -81,7 +81,9 @@ struct SonarrView: View {
                 SeriesDetailSheet(series: show, viewModel: viewModel)
             }
             .sheet(isPresented: $showAddSheet) {
-                SeriesLookupView()
+                SeriesLookupView(onAdded: {
+                    Task { await viewModel.fetchSeries(settings.config(for: .sonarr)) }
+                })
             }
             .overlay(alignment: .bottomTrailing) {
                 if settings.isConfigured(.sonarr) &&

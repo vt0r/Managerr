@@ -543,12 +543,5 @@ struct TorrentRow: View {
         }
     }
 
-    private var statusColor: Color {
-        switch torrent.status {
-        case 4: .blue
-        case 6: .green
-        case 0: Color(.tertiaryLabel)
-        default: .orange
-        }
-    }
+    private var statusColor: Color { torrent.statusColor }
 }
