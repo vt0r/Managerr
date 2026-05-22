@@ -182,6 +182,57 @@ final class TransmissionViewModel {
         }
     }
 
+    func addTracker(_ config: ServerConfig, id: Int, currentTrackers: [TransmissionTracker], announceURL: String, tier: Int) async {
+        let list = buildTrackerList(from: currentTrackers, adding: announceURL, tier: tier)
+        do {
+            try await TransmissionService.shared.setTrackerList(config, id: id, trackerList: list)
+            await fetchTorrentDetail(config, id: id, showFlags: false)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func removeTracker(_ config: ServerConfig, id: Int, trackerId: Int) async {
+        do {
+            try await TransmissionService.shared.removeTracker(config, id: id, trackerId: trackerId)
+            await fetchTorrentDetail(config, id: id, showFlags: false)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func replaceTracker(_ config: ServerConfig, id: Int, currentTrackers: [TransmissionTracker], trackerId: Int, announceURL: String, tier: Int) async {
+        let list = buildTrackerList(from: currentTrackers, replacing: trackerId, with: announceURL, tier: tier)
+        do {
+            try await TransmissionService.shared.setTrackerList(config, id: id, trackerList: list)
+            await fetchTorrentDetail(config, id: id, showFlags: false)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func buildTrackerList(from trackers: [TransmissionTracker], adding url: String, tier: Int) -> String {
+        var groups: [Int: [String]] = [:]
+        for tracker in trackers {
+            if let u = tracker.announce { groups[tracker.tier ?? 0, default: []].append(u) }
+        }
+        groups[tier, default: []].append(url)
+        return trackerListString(from: groups)
+    }
+
+    private func buildTrackerList(from trackers: [TransmissionTracker], replacing trackerId: Int, with url: String, tier: Int) -> String {
+        var groups: [Int: [String]] = [:]
+        for tracker in trackers where tracker.id != trackerId {
+            if let u = tracker.announce { groups[tracker.tier ?? 0, default: []].append(u) }
+        }
+        groups[tier, default: []].append(url)
+        return trackerListString(from: groups)
+    }
+
+    private func trackerListString(from groups: [Int: [String]]) -> String {
+        groups.keys.sorted().map { groups[$0]!.joined(separator: "\n") }.joined(separator: "\n\n")
+    }
+
     func setTorrentPriority(_ config: ServerConfig, id: Int, priority: Int) async {
         do {
             try await TransmissionService.shared.setTorrentPriority(config, id: id, priority: priority)

@@ -124,6 +124,22 @@ actor TransmissionService {
         let _: TransmissionSessionRPCResponse = try await rpcRequest(config, body: body)
     }
 
+    func setTrackerList(_ config: ServerConfig, id: Int, trackerList: String) async throws {
+        let body: [String: Any] = [
+            "method": "torrent-set",
+            "arguments": ["ids": [id], "trackerList": trackerList]
+        ]
+        let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
+    func removeTracker(_ config: ServerConfig, id: Int, trackerId: Int) async throws {
+        let body: [String: Any] = [
+            "method": "torrent-set",
+            "arguments": ["ids": [id], "trackerRemove": [trackerId]]
+        ]
+        let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
     func setTorrentPriority(_ config: ServerConfig, id: Int, priority: Int) async throws {
         let body: [String: Any] = [
             "method": "torrent-set",
