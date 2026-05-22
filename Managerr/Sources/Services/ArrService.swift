@@ -407,6 +407,66 @@ nonisolated final class ArrService: Sendable {
         _ = try await network.requestRaw(url: url, method: "POST", headers: headers(for: config), body: body)
     }
 
+    // MARK: - Wanted
+
+    func fetchRadarrWanted(_ config: ServerConfig, filter: WantedFilter) async throws -> [RadarrMovie] {
+        let url = try makeURL(config, path: "/api/v3/wanted/\(filter.endpoint)", queryItems: [
+            URLQueryItem(name: "pageSize", value: "500"),
+            URLQueryItem(name: "sortKey", value: "releaseDate"),
+            URLQueryItem(name: "sortDirection", value: "descending")
+        ])
+        let response: WantedPageResponse<RadarrMovie> = try await network.request(url: url, headers: headers(for: config))
+        return response.records
+    }
+
+    func fetchSonarrWanted(_ config: ServerConfig, filter: WantedFilter) async throws -> [SonarrEpisode] {
+        let url = try makeURL(config, path: "/api/v3/wanted/\(filter.endpoint)", queryItems: [
+            URLQueryItem(name: "pageSize", value: "500"),
+            URLQueryItem(name: "sortKey", value: "airDateUtc"),
+            URLQueryItem(name: "sortDirection", value: "descending"),
+            URLQueryItem(name: "includeSeries", value: "true")
+        ])
+        let response: WantedPageResponse<SonarrEpisode> = try await network.request(url: url, headers: headers(for: config))
+        return response.records
+    }
+
+    func fetchLidarrWanted(_ config: ServerConfig, filter: WantedFilter) async throws -> [LidarrAlbum] {
+        let url = try makeURL(config, path: "/api/v1/wanted/\(filter.endpoint)", queryItems: [
+            URLQueryItem(name: "pageSize", value: "500"),
+            URLQueryItem(name: "sortKey", value: "releaseDate"),
+            URLQueryItem(name: "sortDirection", value: "descending")
+        ])
+        let response: WantedPageResponse<LidarrAlbum> = try await network.request(url: url, headers: headers(for: config))
+        return response.records
+    }
+
+    func setRadarrMovieMonitored(_ config: ServerConfig, movie: RadarrMovie, monitored: Bool) async throws {
+        let url = try makeURL(config, path: "/api/v3/movie/\(movie.id)")
+        let encoded = try JSONEncoder().encode(movie)
+        guard var dict = try JSONSerialization.jsonObject(with: encoded) as? [String: Any] else { return }
+        dict["monitored"] = monitored
+        let body = try JSONSerialization.data(withJSONObject: dict)
+        _ = try await network.requestRaw(url: url, method: "PUT", headers: headers(for: config), body: body)
+    }
+
+    func setSonarrEpisodeMonitored(_ config: ServerConfig, episode: SonarrEpisode, monitored: Bool) async throws {
+        let url = try makeURL(config, path: "/api/v3/episode/\(episode.id)")
+        let encoded = try JSONEncoder().encode(episode)
+        guard var dict = try JSONSerialization.jsonObject(with: encoded) as? [String: Any] else { return }
+        dict["monitored"] = monitored
+        let body = try JSONSerialization.data(withJSONObject: dict)
+        _ = try await network.requestRaw(url: url, method: "PUT", headers: headers(for: config), body: body)
+    }
+
+    func setLidarrAlbumMonitored(_ config: ServerConfig, album: LidarrAlbum, monitored: Bool) async throws {
+        let url = try makeURL(config, path: "/api/v1/album/\(album.id)")
+        let encoded = try JSONEncoder().encode(album)
+        guard var dict = try JSONSerialization.jsonObject(with: encoded) as? [String: Any] else { return }
+        dict["monitored"] = monitored
+        let body = try JSONSerialization.data(withJSONObject: dict)
+        _ = try await network.requestRaw(url: url, method: "PUT", headers: headers(for: config), body: body)
+    }
+
     // MARK: - Calendar
 
     func fetchRadarrCalendar(_ config: ServerConfig, start: Date, end: Date, unmonitored: Bool = true) async throws -> [RadarrMovie] {

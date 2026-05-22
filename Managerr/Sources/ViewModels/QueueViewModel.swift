@@ -17,89 +17,49 @@ struct ArrQueueItem: Identifiable, Sendable {
 @MainActor
 @Observable
 final class QueueViewModel {
-    let limitToService: ServerConfig.ServiceType?
+    let service: ServerConfig.ServiceType
 
     var items: [ArrQueueItem] = []
     var isLoading = false
     var errorMessages: [ServerConfig.ServiceType: String] = [:]
-    var serviceFilter: ServerConfig.ServiceType? = nil
     var statusFilter: QueueStatusFilter = .all
 
-    init(limitToService: ServerConfig.ServiceType? = nil) {
-        self.limitToService = limitToService
+    init(service: ServerConfig.ServiceType) {
+        self.service = service
     }
 
     var filteredItems: [ArrQueueItem] {
         items.filter { item in
-            let matchesService = serviceFilter == nil || item.serviceType == serviceFilter
-            let matchesStatus: Bool
             switch statusFilter {
-            case .all:
-                matchesStatus = true
+            case .all: return true
             case .active:
                 let s = item.record.status?.lowercased()
-                matchesStatus = ["downloading", "queued", "importing", "importpending", "delay"].contains(s)
-            case .warning:
-                matchesStatus = item.record.hasWarning
-            case .error:
-                matchesStatus = item.record.hasError
+                return ["downloading", "queued", "importing", "importpending", "delay"].contains(s)
+            case .warning: return item.record.hasWarning
+            case .error: return item.record.hasError
             }
-            return matchesService && matchesStatus
         }
     }
 
-    var isFiltered: Bool {
-        (limitToService == nil && serviceFilter != nil) || statusFilter != .all
-    }
+    var isFiltered: Bool { statusFilter != .all }
 
     func fetch(_ settings: SettingsStore) async {
         isLoading = true
         var allItems: [ArrQueueItem] = []
         var errors: [ServerConfig.ServiceType: String] = [:]
 
-        await withTaskGroup(of: (ServerConfig.ServiceType, [ArrQueueRecord], String?).self) { group in
-            let fetchRadarr = limitToService == nil || limitToService == .radarr
-            let fetchSonarr = limitToService == nil || limitToService == .sonarr
-            let fetchLidarr = limitToService == nil || limitToService == .lidarr
-
-            if fetchRadarr && settings.isConfigured(.radarr) {
-                group.addTask {
-                    do {
-                        let records = try await ArrService.shared.fetchRadarrQueue(settings.config(for: .radarr))
-                        return (.radarr, records, nil)
-                    } catch {
-                        return (.radarr, [], error.localizedDescription)
-                    }
-                }
+        let config = settings.config(for: service)
+        do {
+            let records: [ArrQueueRecord]
+            switch service {
+            case .radarr:  records = try await ArrService.shared.fetchRadarrQueue(config)
+            case .sonarr:  records = try await ArrService.shared.fetchSonarrQueue(config)
+            case .lidarr:  records = try await ArrService.shared.fetchLidarrQueue(config)
+            case .transmission: records = []
             }
-            if fetchSonarr && settings.isConfigured(.sonarr) {
-                group.addTask {
-                    do {
-                        let records = try await ArrService.shared.fetchSonarrQueue(settings.config(for: .sonarr))
-                        return (.sonarr, records, nil)
-                    } catch {
-                        return (.sonarr, [], error.localizedDescription)
-                    }
-                }
-            }
-            if fetchLidarr && settings.isConfigured(.lidarr) {
-                group.addTask {
-                    do {
-                        let records = try await ArrService.shared.fetchLidarrQueue(settings.config(for: .lidarr))
-                        return (.lidarr, records, nil)
-                    } catch {
-                        return (.lidarr, [], error.localizedDescription)
-                    }
-                }
-            }
-
-            for await (serviceType, records, errorMsg) in group {
-                if let errorMsg {
-                    errors[serviceType] = errorMsg
-                } else {
-                    allItems += records.map { ArrQueueItem(serviceType: serviceType, record: $0) }
-                }
-            }
+            allItems = records.map { ArrQueueItem(serviceType: service, record: $0) }
+        } catch {
+            errors[service] = error.localizedDescription
         }
 
         items = allItems.sorted { statusSortOrder($0.record.status) < statusSortOrder($1.record.status) }
@@ -108,32 +68,26 @@ final class QueueViewModel {
     }
 
     func removeItem(_ settings: SettingsStore, item: ArrQueueItem, blacklist: Bool) async {
+        let config = settings.config(for: service)
         do {
-            switch item.serviceType {
-            case .radarr:
-                try await ArrService.shared.removeRadarrQueueItem(settings.config(for: .radarr), id: item.record.id, blacklist: blacklist)
-            case .sonarr:
-                try await ArrService.shared.removeSonarrQueueItem(settings.config(for: .sonarr), id: item.record.id, blacklist: blacklist)
-            case .lidarr:
-                try await ArrService.shared.removeLidarrQueueItem(settings.config(for: .lidarr), id: item.record.id, blacklist: blacklist)
-            case .transmission:
-                break
+            switch service {
+            case .radarr: try await ArrService.shared.removeRadarrQueueItem(config, id: item.record.id, blacklist: blacklist)
+            case .sonarr: try await ArrService.shared.removeSonarrQueueItem(config, id: item.record.id, blacklist: blacklist)
+            case .lidarr: try await ArrService.shared.removeLidarrQueueItem(config, id: item.record.id, blacklist: blacklist)
+            case .transmission: break
             }
             items.removeAll { $0.id == item.id }
         } catch {}
     }
 
     func grabItem(_ settings: SettingsStore, item: ArrQueueItem) async {
+        let config = settings.config(for: service)
         do {
-            switch item.serviceType {
-            case .radarr:
-                try await ArrService.shared.grabRadarrQueueItem(settings.config(for: .radarr), id: item.record.id)
-            case .sonarr:
-                try await ArrService.shared.grabSonarrQueueItem(settings.config(for: .sonarr), id: item.record.id)
-            case .lidarr:
-                try await ArrService.shared.grabLidarrQueueItem(settings.config(for: .lidarr), id: item.record.id)
-            case .transmission:
-                break
+            switch service {
+            case .radarr: try await ArrService.shared.grabRadarrQueueItem(config, id: item.record.id)
+            case .sonarr: try await ArrService.shared.grabSonarrQueueItem(config, id: item.record.id)
+            case .lidarr: try await ArrService.shared.grabLidarrQueueItem(config, id: item.record.id)
+            case .transmission: break
             }
             await fetch(settings)
         } catch {}

@@ -10,6 +10,7 @@ struct LidarrView: View {
     @State private var showAddSheet = false
     @State private var showCalendar = false
     @State private var showQueue = false
+    @State private var showWanted = false
 
     private var isRefreshing: Bool { viewModel.isLoading && !viewModel.artists.isEmpty }
 
@@ -64,6 +65,9 @@ struct LidarrView: View {
                         Button { showQueue = true } label: {
                             Label("Activity", systemImage: "clock.arrow.2.circlepath")
                         }
+                        Button { showWanted = true } label: {
+                            Label("Wanted", systemImage: "exclamationmark.triangle")
+                        }
                         Divider()
                         Button {
                             Task { await viewModel.fetchAll(settings.config(for: .lidarr)) }
@@ -105,6 +109,9 @@ struct LidarrView: View {
             }
             .sheet(isPresented: $showQueue) {
                 QueueView(service: .lidarr)
+            }
+            .sheet(isPresented: $showWanted) {
+                WantedView(service: .lidarr)
             }
             .sheet(isPresented: $showAddSheet) {
                 ArtistLookupView(onAdded: {

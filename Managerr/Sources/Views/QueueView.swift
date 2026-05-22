@@ -1,24 +1,5 @@
 import SwiftUI
 
-extension ServerConfig.ServiceType {
-    var abbreviation: String {
-        switch self {
-        case .radarr: "R"
-        case .sonarr: "S"
-        case .lidarr: "L"
-        case .transmission: "T"
-        }
-    }
-
-    var badgeColor: Color {
-        switch self {
-        case .radarr: .blue
-        case .sonarr: .teal
-        case .lidarr: .green
-        case .transmission: .orange
-        }
-    }
-}
 
 struct QueueView: View {
     @Environment(SettingsStore.self) private var settings
@@ -26,21 +7,14 @@ struct QueueView: View {
     @State private var selectedItem: ArrQueueItem?
     @State private var removingItem: ArrQueueItem?
 
-    init(service: ServerConfig.ServiceType? = nil) {
-        _viewModel = State(initialValue: QueueViewModel(limitToService: service))
-    }
-
-    private var anyConfigured: Bool {
-        if let service = viewModel.limitToService {
-            return settings.isConfigured(service)
-        }
-        return settings.isConfigured(.radarr) || settings.isConfigured(.sonarr) || settings.isConfigured(.lidarr)
+    init(service: ServerConfig.ServiceType) {
+        _viewModel = State(initialValue: QueueViewModel(service: service))
     }
 
     var body: some View {
         NavigationStack {
             Group {
-                if !anyConfigured {
+                if !settings.isConfigured(viewModel.service) {
                     notConfiguredView
                 } else if viewModel.isLoading && viewModel.items.isEmpty {
                     ProgressView("Loading activity queue...")
@@ -84,22 +58,6 @@ struct QueueView: View {
 
     private var filterMenu: some View {
         Menu {
-            if viewModel.limitToService == nil {
-                Picker("Service", selection: $viewModel.serviceFilter) {
-                    Text("All Services").tag(Optional<ServerConfig.ServiceType>.none)
-                    if settings.isConfigured(.radarr) {
-                        Text("Radarr").tag(Optional<ServerConfig.ServiceType>.some(.radarr))
-                    }
-                    if settings.isConfigured(.sonarr) {
-                        Text("Sonarr").tag(Optional<ServerConfig.ServiceType>.some(.sonarr))
-                    }
-                    if settings.isConfigured(.lidarr) {
-                        Text("Lidarr").tag(Optional<ServerConfig.ServiceType>.some(.lidarr))
-                    }
-                }
-                Divider()
-            }
-
             Picker("Status", selection: $viewModel.statusFilter) {
                 ForEach(QueueStatusFilter.allCases) { filter in
                     Text(filter.rawValue).tag(filter)
@@ -116,56 +74,47 @@ struct QueueView: View {
     // MARK: - Item list
 
     private var itemList: some View {
-        List {
-            ForEach(Array(viewModel.errorMessages.keys), id: \.self) { serviceType in
-                if let msg = viewModel.errorMessages[serviceType] {
-                    Label("\(serviceType.displayName): \(msg)", systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                        .listRowBackground(Color(.secondarySystemBackground))
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(Array(viewModel.errorMessages.keys), id: \.self) { serviceType in
+                    if let msg = viewModel.errorMessages[serviceType] {
+                        Label("\(serviceType.displayName): \(msg)", systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+                    }
                 }
-            }
 
-            ForEach(viewModel.filteredItems) { item in
-                let isDelayed = item.record.status?.lowercased() == "delay"
-                Button { selectedItem = item } label: {
-                    QueueRowView(item: item)
-                }
-                .buttonStyle(.plain)
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                    Button(role: .destructive) {
-                        removingItem = item
-                    } label: {
-                        Label("Remove", systemImage: "trash")
+                ForEach(viewModel.filteredItems) { item in
+                    let isDelayed = item.record.status?.lowercased() == "delay"
+                    Button { selectedItem = item } label: {
+                        QueueRowView(item: item)
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
                     }
-                }
-                .swipeActions(edge: .leading) {
-                    if isDelayed {
-                        Button {
-                            Task { await viewModel.grabItem(settings, item: item) }
-                        } label: {
-                            Label("Force Grab", systemImage: "bolt.fill")
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        if isDelayed {
+                            Button {
+                                Task { await viewModel.grabItem(settings, item: item) }
+                            } label: {
+                                Label("Force Grab", systemImage: "bolt.fill")
+                            }
                         }
-                        .tint(.green)
-                    }
-                }
-                .contextMenu {
-                    if isDelayed {
-                        Button {
-                            Task { await viewModel.grabItem(settings, item: item) }
+                        Button(role: .destructive) {
+                            removingItem = item
                         } label: {
-                            Label("Force Grab", systemImage: "bolt.fill")
+                            Label("Remove", systemImage: "trash")
                         }
-                    }
-                    Button(role: .destructive) {
-                        removingItem = item
-                    } label: {
-                        Label("Remove", systemImage: "trash")
                     }
                 }
             }
+            .padding(.horizontal)
+            .padding(.bottom, 88)
         }
-        .listStyle(.plain)
         .confirmationDialog(
             "Remove from Queue",
             isPresented: Binding(
@@ -199,7 +148,7 @@ struct QueueView: View {
         } description: {
             Text(viewModel.isFiltered
                  ? "Try adjusting the filter."
-                 : "No active downloads across your configured services.")
+                 : "No active downloads in \(viewModel.service.displayName).")
         }
     }
 
@@ -207,11 +156,7 @@ struct QueueView: View {
         ContentUnavailableView {
             Label("Not Configured", systemImage: "gearshape.2")
         } description: {
-            if let service = viewModel.limitToService {
-                Text("Configure \(service.displayName) in Settings to view its activity queue.")
-            } else {
-                Text("Configure Radarr, Sonarr, or Lidarr in Settings to view their activity queues.")
-            }
+            Text("Configure \(viewModel.service.displayName) in Settings to view its activity queue.")
         }
     }
 }
@@ -224,7 +169,9 @@ private struct QueueRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack(spacing: 8) {
-                serviceBadge
+                Image(systemName: statusIcon)
+                    .font(.caption)
+                    .foregroundStyle(statusColor)
                 Text(item.record.displayTitle)
                     .font(.subheadline.weight(.medium))
                     .lineLimit(1)
@@ -252,16 +199,6 @@ private struct QueueRowView: View {
                 errorPreview
             }
         }
-        .padding(.vertical, 4)
-    }
-
-    private var serviceBadge: some View {
-        Text(item.serviceType.abbreviation)
-            .font(.caption2.weight(.bold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 5)
-            .padding(.vertical, 2)
-            .background(item.serviceType.badgeColor, in: RoundedRectangle(cornerRadius: 4))
     }
 
     private var statusLabel: some View {
@@ -326,6 +263,22 @@ private struct QueueRowView: View {
         case "delay": return "Delayed"
         case "downloadclientunavailable": return "No Client"
         default: return item.record.status?.capitalized ?? "Unknown"
+        }
+    }
+
+    private var statusIcon: String {
+        if item.record.hasError { return "xmark.circle.fill" }
+        if item.record.hasWarning { return "exclamationmark.triangle.fill" }
+        switch item.record.status?.lowercased() {
+        case "downloading":                     return "arrow.down.circle.fill"
+        case "queued":                          return "clock"
+        case "paused":                          return "pause.circle.fill"
+        case "completed":                       return "checkmark.circle.fill"
+        case "importpending", "importing":      return "tray.and.arrow.down.fill"
+        case "failed", "failedpending":         return "xmark.circle.fill"
+        case "delay":                           return "exclamationmark.clock"
+        case "downloadclientunavailable":       return "arrow.down.circle.badge.xmark.fill"
+        default:                                return "questionmark.circle"
         }
     }
 

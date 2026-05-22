@@ -57,33 +57,24 @@ struct QueueDetailSheet: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        ZStack(alignment: .bottomLeading) {
-            item.serviceType.badgeColor.opacity(0.12)
-                .frame(maxWidth: .infinity)
-                .frame(height: 90)
-
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 8) {
-                    Text(item.serviceType.abbreviation)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(item.serviceType.badgeColor, in: RoundedRectangle(cornerRadius: 5))
-                    Text(serviceLabel)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text(formattedStatus)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(statusColor)
-                }
-                Text(item.record.displayTitle)
-                    .font(.title3.bold())
-                    .lineLimit(2)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Text(serviceLabel)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text(formattedStatus)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(statusColor, in: Capsule())
             }
-            .padding()
+            Text(item.record.displayTitle)
+                .font(.title3.bold())
+                .lineLimit(2)
         }
+        .padding()
     }
 
     // MARK: - Progress
