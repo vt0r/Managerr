@@ -26,12 +26,13 @@ nonisolated struct RadarrMovie: Codable, Identifiable, Sendable, Hashable {
     let digitalRelease: String?
     let physicalRelease: String?
     let certification: String?
+    let tags: [Int]?
 
     enum CodingKeys: String, CodingKey {
         case id, title, sortTitle, year, overview, monitored, hasFile, status, runtime
         case tmdbId, imdbId, genres, ratings, images, sizeOnDisk, added, movieFile
         case qualityProfileId, path, rootFolderPath, minimumAvailability
-        case inCinemas, digitalRelease, physicalRelease, certification
+        case inCinemas, digitalRelease, physicalRelease, certification, tags
     }
 
     init(from decoder: Decoder) throws {
@@ -61,6 +62,7 @@ nonisolated struct RadarrMovie: Codable, Identifiable, Sendable, Hashable {
         digitalRelease = try c.decodeIfPresent(String.self, forKey: .digitalRelease)
         physicalRelease = try c.decodeIfPresent(String.self, forKey: .physicalRelease)
         certification = try c.decodeIfPresent(String.self, forKey: .certification)
+        tags = try c.decodeIfPresent([Int].self, forKey: .tags)
     }
 
     var gridBadge: String? {
@@ -150,4 +152,9 @@ nonisolated struct RadarrRootFolder: Codable, Identifiable, Sendable {
 nonisolated struct RadarrQualityProfile: Codable, Identifiable, Sendable {
     let id: Int
     let name: String
+}
+
+nonisolated struct ArrTag: Codable, Identifiable, Sendable {
+    let id: Int
+    let label: String
 }

@@ -7,6 +7,7 @@ struct ArtistDetailSheet: View {
     let viewModel: LidarrViewModel
 
     @State private var showDeleteConfirmation: Bool = false
+    @State private var showEditSheet: Bool = false
     @State private var localMonitored: Bool
     @State private var artistAlbums: [LidarrAlbum] = []
     @State private var isLoadingAlbums: Bool = false
@@ -34,6 +35,13 @@ struct ArtistDetailSheet: View {
             .navigationTitle(artist.artistName ?? "Artist")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showEditSheet = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
                         Button {
@@ -61,6 +69,11 @@ struct ArtistDetailSheet: View {
 
                         Button("Done") { dismiss() }
                     }
+                }
+            }
+            .sheet(isPresented: $showEditSheet) {
+                ArtistEditSheet(artist: artist) {
+                    Task { await viewModel.fetchArtistsSilently(lidarrConfig) }
                 }
             }
             .confirmationDialog("Delete Artist", isPresented: $showDeleteConfirmation) {

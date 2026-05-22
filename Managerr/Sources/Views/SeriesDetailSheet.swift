@@ -7,6 +7,7 @@ struct SeriesDetailSheet: View {
     let viewModel: SonarrViewModel
 
     @State private var showDeleteConfirmation: Bool = false
+    @State private var showEditSheet: Bool = false
     @State private var localMonitored: Bool
     @State private var localSeasonMonitored: [Int: Bool]
     @State private var showManualSearch: Bool = false
@@ -49,6 +50,13 @@ struct SeriesDetailSheet: View {
             .navigationTitle(series.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showEditSheet = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
                         Button {
@@ -69,6 +77,11 @@ struct SeriesDetailSheet: View {
                 }
             }
             .task { await loadEpisodes() }
+            .sheet(isPresented: $showEditSheet) {
+                SeriesEditSheet(series: series) {
+                    Task { await viewModel.fetchSeriesSilently(settings.config(for: .sonarr)) }
+                }
+            }
             .sheet(item: $selectedSeason) { season in
                 SeasonDetailSheet(
                     season: season,

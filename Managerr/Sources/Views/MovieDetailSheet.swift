@@ -7,6 +7,7 @@ struct MovieDetailSheet: View {
     let viewModel: RadarrViewModel
 
     @State private var showDeleteConfirmation: Bool = false
+    @State private var showEditSheet: Bool = false
     @State private var localMonitored: Bool
     @State private var showManualSearch: Bool = false
     @State private var showAutoSearchConfirm: Bool = false
@@ -32,6 +33,13 @@ struct MovieDetailSheet: View {
             .navigationTitle(movie.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showEditSheet = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
                         Button {
@@ -49,6 +57,11 @@ struct MovieDetailSheet: View {
 
                         Button("Done") { dismiss() }
                     }
+                }
+            }
+            .sheet(isPresented: $showEditSheet) {
+                MovieEditSheet(movie: movie) {
+                    Task { await viewModel.fetchMoviesSilently(settings.config(for: .radarr)) }
                 }
             }
             .confirmationDialog("Delete Movie", isPresented: $showDeleteConfirmation) {

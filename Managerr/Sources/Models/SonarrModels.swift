@@ -22,11 +22,14 @@ nonisolated struct SonarrSeries: Codable, Identifiable, Sendable, Hashable {
     let rootFolderPath: String?
     let qualityProfileId: Int?
     let seriesType: String?
+    let tags: [Int]?
+    let monitorNewItems: String?
+    let seasonFolder: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id, title, sortTitle, year, overview, monitored, status, network, runtime
         case tvdbId, imdbId, genres, ratings, images, seasons, statistics, added
-        case path, rootFolderPath, qualityProfileId, seriesType
+        case path, rootFolderPath, qualityProfileId, seriesType, tags, monitorNewItems, seasonFolder
     }
 
     init(from decoder: Decoder) throws {
@@ -52,6 +55,9 @@ nonisolated struct SonarrSeries: Codable, Identifiable, Sendable, Hashable {
         rootFolderPath = try c.decodeIfPresent(String.self, forKey: .rootFolderPath)
         qualityProfileId = try c.decodeIfPresent(Int.self, forKey: .qualityProfileId)
         seriesType = try c.decodeIfPresent(String.self, forKey: .seriesType)
+        tags = try c.decodeIfPresent([Int].self, forKey: .tags)
+        monitorNewItems = try c.decodeIfPresent(String.self, forKey: .monitorNewItems)
+        seasonFolder = try c.decodeIfPresent(Bool.self, forKey: .seasonFolder)
     }
 
     var posterImagePath: String? {

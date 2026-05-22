@@ -10,6 +10,7 @@ struct AlbumDetailSheet: View {
     @State private var tracks: [LidarrTrack] = []
     @State private var isLoadingTracks: Bool = false
     @State private var showAutoSearchConfirm: Bool = false
+    @State private var showEditSheet: Bool = false
     @State private var showDeleteAlbumFilesConfirm: Bool = false
     @State private var deletingTrack: LidarrTrack?
     @State private var deletedTrackFileIds: Set<Int> = []
@@ -38,6 +39,15 @@ struct AlbumDetailSheet: View {
             .navigationTitle(album.title ?? "Album")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    if viewModel != nil {
+                        Button {
+                            showEditSheet = true
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
                         if let viewModel {
@@ -72,6 +82,13 @@ struct AlbumDetailSheet: View {
                 }
             }
             .task { await loadTracks() }
+            .sheet(isPresented: $showEditSheet) {
+                if let vm = viewModel {
+                    AlbumEditSheet(album: album) {
+                        Task { await vm.fetchArtistsSilently(lidarrConfig) }
+                    }
+                }
+            }
             .alert("Delete Album Files?", isPresented: $showDeleteAlbumFilesConfirm) {
                 Button("Delete", role: .destructive) {
                     let fileIds = tracks.compactMap { t -> Int? in

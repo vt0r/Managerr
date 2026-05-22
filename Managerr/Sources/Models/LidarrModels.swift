@@ -16,10 +16,13 @@ nonisolated struct LidarrArtist: Codable, Identifiable, Sendable, Hashable {
     let qualityProfileId: Int?
     let metadataProfileId: Int?
     let foreignArtistId: String?
+    let tags: [Int]?
+    let monitorNewItems: String?
 
     enum CodingKeys: String, CodingKey {
         case id, artistName, sortName, overview, monitored, status, genres, images
         case statistics, added, path, rootFolderPath, qualityProfileId, metadataProfileId, foreignArtistId
+        case tags, monitorNewItems
     }
 
     init(from decoder: Decoder) throws {
@@ -39,6 +42,8 @@ nonisolated struct LidarrArtist: Codable, Identifiable, Sendable, Hashable {
         qualityProfileId = try c.decodeIfPresent(Int.self, forKey: .qualityProfileId)
         metadataProfileId = try c.decodeIfPresent(Int.self, forKey: .metadataProfileId)
         foreignArtistId = try c.decodeIfPresent(String.self, forKey: .foreignArtistId)
+        tags = try c.decodeIfPresent([Int].self, forKey: .tags)
+        monitorNewItems = try c.decodeIfPresent(String.self, forKey: .monitorNewItems)
     }
 
     func posterURL(config: ServerConfig) -> URL? {
@@ -96,6 +101,8 @@ nonisolated struct LidarrAlbum: Codable, Identifiable, Sendable, Hashable {
     let duration: Int?
     let artist: LidarrAlbumArtist?
     let statistics: LidarrAlbumStats?
+    let anyReleaseOk: Bool?
+    let releases: [LidarrAlbumRelease]?
 
     func coverURL(config: ServerConfig) -> URL? {
         guard let baseURL = config.baseURL else { return nil }
@@ -112,6 +119,16 @@ nonisolated struct LidarrAlbum: Codable, Identifiable, Sendable, Hashable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
+}
+
+nonisolated struct LidarrAlbumRelease: Codable, Identifiable, Sendable {
+    let id: Int
+    let title: String?
+    let mediumCount: Int?
+    let trackCount: Int?
+    let releaseDate: String?
+    let status: String?
+    let monitored: Bool
 }
 
 nonisolated struct LidarrAlbumArtist: Codable, Sendable {

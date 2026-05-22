@@ -52,6 +52,11 @@ nonisolated final class ArrService: Sendable {
         return try await network.request(url: url, headers: headers(for: config))
     }
 
+    func fetchRadarrTags(_ config: ServerConfig) async throws -> [ArrTag] {
+        let url = try makeURL(config, path: "/api/v3/tag")
+        return try await network.request(url: url, headers: headers(for: config))
+    }
+
     func fetchSonarrSeries(_ config: ServerConfig) async throws -> [SonarrSeries] {
         let url = try makeURL(config, path: "/api/v3/series")
         return try await network.request(url: url, headers: headers(for: config))
@@ -83,9 +88,33 @@ nonisolated final class ArrService: Sendable {
         return try await network.request(url: url, headers: headers(for: config))
     }
 
-    func updateSonarrSeries(_ config: ServerConfig, series: SonarrSeries) async throws {
+    func fetchSonarrTags(_ config: ServerConfig) async throws -> [ArrTag] {
+        let url = try makeURL(config, path: "/api/v3/tag")
+        return try await network.request(url: url, headers: headers(for: config))
+    }
+
+    func updateSonarrSeries(
+        _ config: ServerConfig,
+        series: SonarrSeries,
+        qualityProfileId: Int,
+        monitored: Bool,
+        seriesType: String,
+        rootFolderPath: String,
+        tags: [Int],
+        monitorNewItems: String,
+        seasonFolder: Bool
+    ) async throws {
         let url = try makeURL(config, path: "/api/v3/series/\(series.id)")
-        let body = try JSONEncoder().encode(series)
+        let encoded = try JSONEncoder().encode(series)
+        guard var dict = try JSONSerialization.jsonObject(with: encoded) as? [String: Any] else { return }
+        dict["qualityProfileId"] = qualityProfileId
+        dict["monitored"] = monitored
+        dict["seriesType"] = seriesType
+        dict["rootFolderPath"] = rootFolderPath
+        dict["tags"] = tags
+        dict["monitorNewItems"] = monitorNewItems
+        dict["seasonFolder"] = seasonFolder
+        let body = try JSONSerialization.data(withJSONObject: dict)
         _ = try await network.requestRaw(url: url, method: "PUT", headers: headers(for: config), body: body)
     }
 
@@ -169,21 +198,79 @@ nonisolated final class ArrService: Sendable {
         return try await network.request(url: url, headers: headers(for: config))
     }
 
-    func updateLidarrArtist(_ config: ServerConfig, artist: LidarrArtist) async throws {
+    func fetchLidarrTags(_ config: ServerConfig) async throws -> [ArrTag] {
+        let url = try makeURL(config, path: "/api/v1/tag")
+        return try await network.request(url: url, headers: headers(for: config))
+    }
+
+    func fetchLidarrAlbumDetail(_ config: ServerConfig, albumId: Int) async throws -> LidarrAlbum {
+        let url = try makeURL(config, path: "/api/v1/album/\(albumId)")
+        return try await network.request(url: url, headers: headers(for: config))
+    }
+
+    func updateLidarrArtist(
+        _ config: ServerConfig,
+        artist: LidarrArtist,
+        qualityProfileId: Int,
+        metadataProfileId: Int,
+        monitored: Bool,
+        rootFolderPath: String,
+        tags: [Int],
+        monitorNewItems: String
+    ) async throws {
         let url = try makeURL(config, path: "/api/v1/artist/\(artist.id)")
-        let body = try JSONEncoder().encode(artist)
+        let encoded = try JSONEncoder().encode(artist)
+        guard var dict = try JSONSerialization.jsonObject(with: encoded) as? [String: Any] else { return }
+        dict["qualityProfileId"] = qualityProfileId
+        dict["metadataProfileId"] = metadataProfileId
+        dict["monitored"] = monitored
+        dict["rootFolderPath"] = rootFolderPath
+        dict["tags"] = tags
+        dict["monitorNewItems"] = monitorNewItems
+        let body = try JSONSerialization.data(withJSONObject: dict)
         _ = try await network.requestRaw(url: url, method: "PUT", headers: headers(for: config), body: body)
     }
 
-    func updateLidarrAlbum(_ config: ServerConfig, album: LidarrAlbum) async throws {
+    func updateLidarrAlbum(
+        _ config: ServerConfig,
+        album: LidarrAlbum,
+        monitored: Bool,
+        anyReleaseOk: Bool,
+        selectedReleaseId: Int?
+    ) async throws {
         let url = try makeURL(config, path: "/api/v1/album/\(album.id)")
-        let body = try JSONEncoder().encode(album)
+        let encoded = try JSONEncoder().encode(album)
+        guard var dict = try JSONSerialization.jsonObject(with: encoded) as? [String: Any] else { return }
+        dict["monitored"] = monitored
+        dict["anyReleaseOk"] = anyReleaseOk
+        if let selectedReleaseId, var releases = dict["releases"] as? [[String: Any]] {
+            for i in releases.indices {
+                releases[i]["monitored"] = (releases[i]["id"] as? Int == selectedReleaseId)
+            }
+            dict["releases"] = releases
+        }
+        let body = try JSONSerialization.data(withJSONObject: dict)
         _ = try await network.requestRaw(url: url, method: "PUT", headers: headers(for: config), body: body)
     }
 
-    func updateRadarrMovie(_ config: ServerConfig, movie: RadarrMovie) async throws {
+    func updateRadarrMovie(
+        _ config: ServerConfig,
+        movie: RadarrMovie,
+        qualityProfileId: Int,
+        monitored: Bool,
+        minimumAvailability: String,
+        rootFolderPath: String,
+        tags: [Int]
+    ) async throws {
         let url = try makeURL(config, path: "/api/v3/movie/\(movie.id)")
-        let body = try JSONEncoder().encode(movie)
+        let encoded = try JSONEncoder().encode(movie)
+        guard var dict = try JSONSerialization.jsonObject(with: encoded) as? [String: Any] else { return }
+        dict["qualityProfileId"] = qualityProfileId
+        dict["monitored"] = monitored
+        dict["minimumAvailability"] = minimumAvailability
+        dict["rootFolderPath"] = rootFolderPath
+        dict["tags"] = tags
+        let body = try JSONSerialization.data(withJSONObject: dict)
         _ = try await network.requestRaw(url: url, method: "PUT", headers: headers(for: config), body: body)
     }
 
