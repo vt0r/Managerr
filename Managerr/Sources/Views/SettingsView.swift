@@ -120,7 +120,7 @@ extension TabSelection {
         case .tvShows: "TV Shows"
         case .music: "Music"
         case .downloads: "Downloads"
-        case .search: "Search"
+        case .activity: "Activity"
         case .settings: "Settings"
         }
     }

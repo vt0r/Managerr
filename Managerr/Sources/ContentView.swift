@@ -22,6 +22,10 @@ struct ContentView: View {
                 TransmissionView()
             }
 
+            Tab("Activity", systemImage: "clock.arrow.2.circlepath", value: TabSelection.activity) {
+                QueueView()
+            }
+
             Tab("Settings", systemImage: "gear", value: TabSelection.settings) {
                 SettingsView()
             }

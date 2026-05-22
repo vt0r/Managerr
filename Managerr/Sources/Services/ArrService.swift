@@ -202,6 +202,79 @@ nonisolated final class ArrService: Sendable {
         _ = try await network.requestRaw(url: url, method: "POST", headers: headers(for: config), body: artist)
     }
 
+    // MARK: - Queue
+
+    func fetchRadarrQueue(_ config: ServerConfig) async throws -> [ArrQueueRecord] {
+        let url = try makeURL(config, path: "/api/v3/queue", queryItems: [
+            URLQueryItem(name: "pageSize", value: "200"),
+            URLQueryItem(name: "includeMovie", value: "true")
+        ])
+        let response: ArrQueueResponse = try await network.request(url: url, headers: headers(for: config))
+        return response.records
+    }
+
+    func fetchSonarrQueue(_ config: ServerConfig) async throws -> [ArrQueueRecord] {
+        let url = try makeURL(config, path: "/api/v3/queue", queryItems: [
+            URLQueryItem(name: "pageSize", value: "200"),
+            URLQueryItem(name: "includeSeries", value: "true"),
+            URLQueryItem(name: "includeEpisode", value: "true")
+        ])
+        let response: ArrQueueResponse = try await network.request(url: url, headers: headers(for: config))
+        return response.records
+    }
+
+    func fetchLidarrQueue(_ config: ServerConfig) async throws -> [ArrQueueRecord] {
+        let url = try makeURL(config, path: "/api/v1/queue", queryItems: [
+            URLQueryItem(name: "pageSize", value: "200"),
+            URLQueryItem(name: "includeArtist", value: "true"),
+            URLQueryItem(name: "includeAlbum", value: "true")
+        ])
+        let response: ArrQueueResponse = try await network.request(url: url, headers: headers(for: config))
+        return response.records
+    }
+
+    func removeRadarrQueueItem(_ config: ServerConfig, id: Int, blacklist: Bool) async throws {
+        let url = try makeURL(config, path: "/api/v3/queue/\(id)", queryItems: [
+            URLQueryItem(name: "blacklist", value: String(blacklist)),
+            URLQueryItem(name: "removeFromClient", value: "true")
+        ])
+        _ = try await network.requestRaw(url: url, method: "DELETE", headers: headers(for: config))
+    }
+
+    func removeSonarrQueueItem(_ config: ServerConfig, id: Int, blacklist: Bool) async throws {
+        let url = try makeURL(config, path: "/api/v3/queue/\(id)", queryItems: [
+            URLQueryItem(name: "blacklist", value: String(blacklist)),
+            URLQueryItem(name: "removeFromClient", value: "true")
+        ])
+        _ = try await network.requestRaw(url: url, method: "DELETE", headers: headers(for: config))
+    }
+
+    func removeLidarrQueueItem(_ config: ServerConfig, id: Int, blacklist: Bool) async throws {
+        let url = try makeURL(config, path: "/api/v1/queue/\(id)", queryItems: [
+            URLQueryItem(name: "blacklist", value: String(blacklist)),
+            URLQueryItem(name: "removeFromClient", value: "true")
+        ])
+        _ = try await network.requestRaw(url: url, method: "DELETE", headers: headers(for: config))
+    }
+
+    func grabRadarrQueueItem(_ config: ServerConfig, id: Int) async throws {
+        let url = try makeURL(config, path: "/api/v3/queue/grab")
+        let body = try JSONEncoder().encode(["ids": [id]])
+        _ = try await network.requestRaw(url: url, method: "POST", headers: headers(for: config), body: body)
+    }
+
+    func grabSonarrQueueItem(_ config: ServerConfig, id: Int) async throws {
+        let url = try makeURL(config, path: "/api/v3/queue/grab")
+        let body = try JSONEncoder().encode(["ids": [id]])
+        _ = try await network.requestRaw(url: url, method: "POST", headers: headers(for: config), body: body)
+    }
+
+    func grabLidarrQueueItem(_ config: ServerConfig, id: Int) async throws {
+        let url = try makeURL(config, path: "/api/v1/queue/grab")
+        let body = try JSONEncoder().encode(["ids": [id]])
+        _ = try await network.requestRaw(url: url, method: "POST", headers: headers(for: config), body: body)
+    }
+
     // MARK: - Release (Manual Search)
 
     func fetchRadarrReleases(_ config: ServerConfig, movieId: Int) async throws -> [ArrRelease] {

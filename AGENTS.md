@@ -40,7 +40,7 @@ xcodebuild test -project Managerr.xcodeproj -scheme Managerr -destination 'platf
 ``` txt
 Managerr/Sources/
 ├── ManagerrApp.swift             # App entry point, injects SettingsStore into environment
-├── ContentView.swift             # Root TabView (Movies, TV, Music, Torrents, Search, Settings)
+├── ContentView.swift             # Root TabView (Movies, TV Shows, Music, Downloads, Activity, Settings)
 ├── Models/                       # Decodable structs matching API response shapes
 ├── Services/                     # Network layer (singletons)
 ├── ViewModels/                   # @Observable classes; own business logic and state
@@ -62,8 +62,9 @@ All services are singletons accessed via `.shared`.
 
 ## Key Models
 
-- **`ServerConfig`** (`Models/ServerConfig.swift`) — unified config struct with `ServiceType` enum (radarr, sonarr, lidarr, transmission, tmdb)
+- **`ServerConfig`** (`Models/ServerConfig.swift`) — unified config struct with `ServiceType` enum (radarr, sonarr, lidarr, transmission); also defines `TabSelection` enum
 - **`TransmissionTorrent`** (`Models/TransmissionModels.swift`) — status is an `Int` (0=Stopped, 4=Downloading, 6=Seeding); `AnyCodable` handles flexible JSON
+- **`ArrQueueRecord`** (`Models/QueueModels.swift`) — unified queue item for all three *arrs; `protocol` is decoded via `CodingKeys` to `downloadProtocol`; embeds optional `ArrQueueMovie/Series/Episode/Artist/Album` for display title construction; all structs are `nonisolated` to satisfy `Sendable` constraints
 - Radarr/Sonarr/Lidarr models are straightforward `Decodable` structs mirroring their v3/v1 API responses
 
 ## ViewModels
@@ -74,6 +75,7 @@ All use `@Observable` (not `ObservableObject`). Key patterns:
 - Sort orders are nested enums on each ViewModel
 - `LidarrViewModel` has a `viewMode` (Artists vs Albums) and fetches both concurrently with `async let`
 - `TransmissionViewModel` tracks `filterStatus` (All/Downloading/Seeding/Stopped), `sortOption` (Name/DateAdded/Size/Progress/Ratio/Speed), and `sortAscending`. Exposes aggregate `totalDownloadSpeed`/`totalUploadSpeed`. `peerCountries: [String: String]` caches IP → country code lookups (batched at 10/s via `api.country.is`). `detailedTorrent` is populated by `fetchTorrentDetail` which is called once on sheet open then polled every 5 seconds.
+- `QueueViewModel` fetches all three *arr queues in parallel via `withTaskGroup`, exposes `filteredItems` (computed, driven by `serviceFilter: ServiceType?` and `statusFilter: QueueStatusFilter`), and auto-polls every 30 seconds via a `while !Task.isCancelled` loop in `.task`. `QueueStatusFilter` is an enum: All / Active / Warning / Error.
 
 ## Views
 
@@ -83,15 +85,17 @@ All use `@Observable` (not `ObservableObject`). Key patterns:
 - Settings are in `SettingsView` + `ServiceConfigSheet`; connection testing is done inline
 - **`ManualSearchView`** — generic sheet for browsing and grabbing indexer releases; used by movie, season, episode, and album detail sheets
 - **`SeasonDetailSheet`** — episode list for a single season; supports per-episode and per-season monitored toggling, file deletion, and manual/auto search
+- **`QueueView`** — the Activity tab; flat list of all *arr queue items sorted by urgency; filter menu (service + status) mirrors the sort-menu pattern from Radarr/Sonarr views; rows open `QueueDetailSheet` on tap; trailing swipe removes, leading swipe Force Grabs (delayed items only); `ServiceType.abbreviation` and `ServiceType.badgeColor` extensions live here at internal scope (shared with `QueueDetailSheet`)
+- **`QueueDetailSheet`** — download detail sheet; colored header strip using the service's badge color; progress section with size breakdown, percentage, ETA, and estimated completion as a relative `Text(date, style: .relative)`; download details section (protocol, client, indexer, full selectable release name); status messages panel shown only when warnings/errors are present; Force Grab and Remove actions at the bottom
 - **`ReleaseModels`** (`Models/ReleaseModels.swift`) — shared `Decodable` structs for Radarr/Sonarr/Lidarr release responses
 
 ## API Endpoints Used
 
 | Service | Base path | Auth |
 | ------- | --------- | ---- |
-| Radarr | `/api/v3/movie`, `/api/v3/movie/lookup`, `/api/v3/command`, `/api/v3/rootfolder`, `/api/v3/qualityprofile`, `/api/v3/release` | `X-Api-Key` header |
-| Sonarr | `/api/v3/series`, `/api/v3/series/lookup`, `/api/v3/episode`, `/api/v3/episodefile`, `/api/v3/episodefile/bulk`, `/api/v3/release` | `X-Api-Key` header |
-| Lidarr | `/api/v1/artist`, `/api/v1/artist/lookup`, `/api/v1/album`, `/api/v1/track`, `/api/v1/trackfile`, `/api/v1/release` | `X-Api-Key` header |
+| Radarr | `/api/v3/movie`, `/api/v3/movie/lookup`, `/api/v3/command`, `/api/v3/rootfolder`, `/api/v3/qualityprofile`, `/api/v3/release`, `/api/v3/queue`, `/api/v3/queue/{id}`, `/api/v3/queue/grab` | `X-Api-Key` header |
+| Sonarr | `/api/v3/series`, `/api/v3/series/lookup`, `/api/v3/episode`, `/api/v3/episodefile`, `/api/v3/episodefile/bulk`, `/api/v3/release`, `/api/v3/queue`, `/api/v3/queue/{id}`, `/api/v3/queue/grab` | `X-Api-Key` header |
+| Lidarr | `/api/v1/artist`, `/api/v1/artist/lookup`, `/api/v1/album`, `/api/v1/track`, `/api/v1/trackfile`, `/api/v1/release`, `/api/v1/queue`, `/api/v1/queue/{id}`, `/api/v1/queue/grab` | `X-Api-Key` header |
 | Transmission | `/transmission/rpc` | Basic auth + session ID |
 | api.country.is | `/{ip}` | None (rate-limited to 10 req/s in batches) |
 

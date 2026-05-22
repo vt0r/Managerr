@@ -5,7 +5,7 @@ nonisolated enum TabSelection: String, CaseIterable, Sendable {
     case tvShows
     case music
     case downloads
-    case search
+    case activity
     case settings
 }
 
