@@ -126,23 +126,25 @@ nonisolated struct SonarrEpisode: Codable, Identifiable, Sendable {
     let monitored: Bool
     let airDate: String?
     let episodeFileId: Int?
+    let series: SonarrSeries?  // present in calendar responses
 
     enum CodingKeys: String, CodingKey {
-        case id, seriesId, seasonNumber, episodeNumber, title, overview, hasFile, monitored, airDate, episodeFileId
+        case id, seriesId, seasonNumber, episodeNumber, title, overview, hasFile, monitored, airDate, episodeFileId, series
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        id            = try c.decodeIfPresent(Int.self,    forKey: .id)            ?? 0
-        seriesId      = try c.decodeIfPresent(Int.self,    forKey: .seriesId)      ?? 0
-        seasonNumber  = try c.decodeIfPresent(Int.self,    forKey: .seasonNumber)  ?? 0
-        episodeNumber = try c.decodeIfPresent(Int.self,    forKey: .episodeNumber) ?? 0
-        title         = try c.decodeIfPresent(String.self, forKey: .title)
-        overview      = try c.decodeIfPresent(String.self, forKey: .overview)
-        hasFile       = try c.decodeIfPresent(Bool.self,   forKey: .hasFile)       ?? false
-        monitored     = try c.decodeIfPresent(Bool.self,   forKey: .monitored)     ?? false
-        airDate       = try c.decodeIfPresent(String.self, forKey: .airDate)
-        episodeFileId = try c.decodeIfPresent(Int.self,    forKey: .episodeFileId)
+        id            = try c.decodeIfPresent(Int.self,         forKey: .id)            ?? 0
+        seriesId      = try c.decodeIfPresent(Int.self,         forKey: .seriesId)      ?? 0
+        seasonNumber  = try c.decodeIfPresent(Int.self,         forKey: .seasonNumber)  ?? 0
+        episodeNumber = try c.decodeIfPresent(Int.self,         forKey: .episodeNumber) ?? 0
+        title         = try c.decodeIfPresent(String.self,      forKey: .title)
+        overview      = try c.decodeIfPresent(String.self,      forKey: .overview)
+        hasFile       = try c.decodeIfPresent(Bool.self,        forKey: .hasFile)       ?? false
+        monitored     = try c.decodeIfPresent(Bool.self,        forKey: .monitored)     ?? false
+        airDate       = try c.decodeIfPresent(String.self,      forKey: .airDate)
+        episodeFileId = try c.decodeIfPresent(Int.self,         forKey: .episodeFileId)
+        series        = try c.decodeIfPresent(SonarrSeries.self, forKey: .series)
     }
 }
 

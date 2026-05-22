@@ -7,6 +7,7 @@ struct RadarrView: View {
     @State private var viewModel = RadarrViewModel()
     @State private var selectedMovie: RadarrMovie?
     @State private var showAddSheet = false
+    @State private var showCalendar = false
 
     private var isRefreshing: Bool { viewModel.isLoading && !viewModel.movies.isEmpty }
 
@@ -46,6 +47,10 @@ struct RadarrView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
+                        Button { showCalendar = true } label: {
+                            Label("Calendar", systemImage: "calendar")
+                        }
+                        Divider()
                         Button {
                             Task { await viewModel.fetchMovies(settings.config(for: .radarr)) }
                         } label: {
@@ -55,9 +60,7 @@ struct RadarrView: View {
                         .accessibilityLabel(isRefreshing ? "Refreshing" : "Refresh")
                         if let url = settings.config(for: .radarr).baseURL {
                             Divider()
-                            Button {
-                                openURL(url)
-                            } label: {
+                            Button { openURL(url) } label: {
                                 Label("Open Radarr in Browser", systemImage: "safari")
                             }
                         }
@@ -79,6 +82,9 @@ struct RadarrView: View {
             }
             .sheet(item: $selectedMovie) { movie in
                 MovieDetailSheet(movie: movie, viewModel: viewModel)
+            }
+            .sheet(isPresented: $showCalendar) {
+                RadarrCalendarView()
             }
             .sheet(isPresented: $showAddSheet) {
                 MovieLookupView(onAdded: {

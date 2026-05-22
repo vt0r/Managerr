@@ -319,4 +319,47 @@ nonisolated final class ArrService: Sendable {
         let body = try JSONEncoder().encode(ReleaseGrabRequest(guid: guid, indexerId: indexerId))
         _ = try await network.requestRaw(url: url, method: "POST", headers: headers(for: config), body: body)
     }
+
+    // MARK: - Calendar
+
+    func fetchRadarrCalendar(_ config: ServerConfig, start: Date, end: Date, unmonitored: Bool = true) async throws -> [RadarrMovie] {
+        let url = try makeURL(config, path: "/api/v3/calendar", queryItems: [
+            URLQueryItem(name: "start", value: Self.calendarDate(start)),
+            URLQueryItem(name: "end", value: Self.calendarDate(end)),
+            URLQueryItem(name: "unmonitored", value: String(unmonitored))
+        ])
+        return try await network.request(url: url, headers: headers(for: config))
+    }
+
+    func fetchSonarrCalendar(_ config: ServerConfig, start: Date, end: Date, unmonitored: Bool = true) async throws -> [SonarrEpisode] {
+        let url = try makeURL(config, path: "/api/v3/calendar", queryItems: [
+            URLQueryItem(name: "start", value: Self.calendarDate(start)),
+            URLQueryItem(name: "end", value: Self.calendarDate(end)),
+            URLQueryItem(name: "unmonitored", value: String(unmonitored)),
+            URLQueryItem(name: "includeSeries", value: "true")
+        ])
+        return try await network.request(url: url, headers: headers(for: config))
+    }
+
+    func fetchLidarrCalendar(_ config: ServerConfig, start: Date, end: Date, unmonitored: Bool = true) async throws -> [LidarrAlbum] {
+        let url = try makeURL(config, path: "/api/v1/calendar", queryItems: [
+            URLQueryItem(name: "start", value: Self.calendarDate(start)),
+            URLQueryItem(name: "end", value: Self.calendarDate(end)),
+            URLQueryItem(name: "unmonitored", value: String(unmonitored)),
+            URLQueryItem(name: "includeArtist", value: "true")
+        ])
+        return try await network.request(url: url, headers: headers(for: config))
+    }
+
+    private static let calendarFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(secondsFromGMT: 0)
+        return f
+    }()
+
+    private static func calendarDate(_ date: Date) -> String {
+        calendarFormatter.string(from: date)
+    }
 }

@@ -7,6 +7,7 @@ struct SonarrView: View {
     @State private var viewModel = SonarrViewModel()
     @State private var selectedSeries: SonarrSeries?
     @State private var showAddSheet = false
+    @State private var showCalendar = false
 
     private var isRefreshing: Bool { viewModel.isLoading && !viewModel.series.isEmpty }
 
@@ -46,6 +47,10 @@ struct SonarrView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
+                        Button { showCalendar = true } label: {
+                            Label("Calendar", systemImage: "calendar")
+                        }
+                        Divider()
                         Button {
                             Task { await viewModel.fetchSeries(settings.config(for: .sonarr)) }
                         } label: {
@@ -55,9 +60,7 @@ struct SonarrView: View {
                         .accessibilityLabel(isRefreshing ? "Refreshing" : "Refresh")
                         if let url = settings.config(for: .sonarr).baseURL {
                             Divider()
-                            Button {
-                                openURL(url)
-                            } label: {
+                            Button { openURL(url) } label: {
                                 Label("Open Sonarr in Browser", systemImage: "safari")
                             }
                         }
@@ -79,6 +82,9 @@ struct SonarrView: View {
             }
             .sheet(item: $selectedSeries) { show in
                 SeriesDetailSheet(series: show, viewModel: viewModel)
+            }
+            .sheet(isPresented: $showCalendar) {
+                SonarrCalendarView()
             }
             .sheet(isPresented: $showAddSheet) {
                 SeriesLookupView(onAdded: {

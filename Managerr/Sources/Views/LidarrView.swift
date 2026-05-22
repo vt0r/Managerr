@@ -8,6 +8,7 @@ struct LidarrView: View {
     @State private var selectedArtist: LidarrArtist?
     @State private var selectedAlbum: LidarrAlbum?
     @State private var showAddSheet = false
+    @State private var showCalendar = false
 
     private var isRefreshing: Bool { viewModel.isLoading && !viewModel.artists.isEmpty }
 
@@ -56,6 +57,10 @@ struct LidarrView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
+                        Button { showCalendar = true } label: {
+                            Label("Calendar", systemImage: "calendar")
+                        }
+                        Divider()
                         Button {
                             Task { await viewModel.fetchAll(settings.config(for: .lidarr)) }
                         } label: {
@@ -65,9 +70,7 @@ struct LidarrView: View {
                         .accessibilityLabel(isRefreshing ? "Refreshing" : "Refresh")
                         if let url = settings.config(for: .lidarr).baseURL {
                             Divider()
-                            Button {
-                                openURL(url)
-                            } label: {
+                            Button { openURL(url) } label: {
                                 Label("Open Lidarr in Browser", systemImage: "safari")
                             }
                         }
@@ -92,6 +95,9 @@ struct LidarrView: View {
             }
             .sheet(item: $selectedAlbum) { album in
                 AlbumDetailSheet(album: album, viewModel: viewModel)
+            }
+            .sheet(isPresented: $showCalendar) {
+                LidarrCalendarView()
             }
             .sheet(isPresented: $showAddSheet) {
                 ArtistLookupView(onAdded: {
