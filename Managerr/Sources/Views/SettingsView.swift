@@ -57,6 +57,7 @@ struct SettingsView: View {
                                 Circle()
                                     .fill(config.isEnabled ? Color.green : Color(.tertiaryLabel))
                                     .frame(width: 8, height: 8)
+                                    .accessibilityHidden(true)
 
                                 Image(systemName: "chevron.right")
                                     .font(.caption.weight(.semibold))
@@ -64,6 +65,7 @@ struct SettingsView: View {
                             }
                         }
                         .tint(.primary)
+                        .accessibilityValue(config.isEnabled ? "Enabled" : "Not configured")
                     }
                 }
 
@@ -173,13 +175,20 @@ struct ServiceConfigSheet: View {
                             Spacer()
                             if isTesting {
                                 ProgressView()
+                                    .accessibilityHidden(true)
                             } else if let testResult {
                                 Image(systemName: testResult == "OK" ? "checkmark.circle.fill" : "xmark.circle.fill")
                                     .foregroundStyle(testResult == "OK" ? .green : .red)
+                                    .accessibilityHidden(true)
                             }
                         }
                     }
                     .disabled(url.isEmpty || isTesting)
+                    .accessibilityValue({
+                        if isTesting { return "Testing" }
+                        guard let r = testResult else { return "" }
+                        return r == "OK" ? "Connected" : "Failed: \(r)"
+                    }())
 
                     if let testResult, testResult != "OK" {
                         Text(testResult)

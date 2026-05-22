@@ -116,34 +116,122 @@ All use `@Observable` (not `ObservableObject`). Key patterns:
 
 ## Accessibility Standards
 
-All SwiftUI views must meet the following requirements. These are enforced on review.
+**For automated contributions, accessibility is not optional and is not best-effort. It is a hard requirement, on par with compilation.** Any PR or commit from an agent that adds or modifies a SwiftUI view must include correct, complete accessibility coverage for every new or changed element. A missing `.accessibilityLabel` on a button, a missing `.accessibilityHidden(true)` on a decorative image, or a ProgressView without a label is a defect that must be fixed in the same commit — not deferred, not left as a TODO. If you are unsure whether a particular element needs accessibility treatment, apply it. The cost of a false positive is zero; the cost of a missed label is a broken experience for users who depend on VoiceOver, Switch Control, or Voice Control.
+
+Human contributors: we warmly welcome your contributions and understand that accessibility is a wide and complex topic. Please do your best with the guidelines below, and if you miss something we will fix it up — this strict framing is aimed at automated tooling, not at you.
 
 ### Rules
 
-**Every interactive element must be labelled.**
-Buttons, toggles, and tappable cards that rely on an icon or image alone need `.accessibilityLabel("…")`. Prefer concise noun/verb phrases ("Toggle monitoring", "Play trailer").
+Every rule applies to any new element you add or existing element you significantly modify.
 
-**Decorative images must be hidden.**
-Pure-decoration images (e.g. posters used as backgrounds) get `.accessibilityHidden(true)` so VoiceOver skips them.
+---
+
+**Every interactive element must be labelled.**
+Any button, toggle, or tappable area that uses only an icon (SF Symbol or image) with no adjacent visible text requires `.accessibilityLabel("…")`. Prefer concise noun/verb phrases. Examples:
+
+```swift
+Button { … } label: { Image(systemName: "plus") }
+    .accessibilityLabel("Add Tracker")
+
+Menu { … } label: { Image(systemName: "ellipsis.circle") }
+    .accessibilityLabel("More options")
+```
+
+Icon-only buttons inside toolbars and cells are the most common miss — check every `Image(systemName:)` that lives inside a tappable container.
+
+---
+
+**Every decorative image must be hidden.**
+Poster thumbnails, fanart backgrounds, cover art, placeholder images, and gradient overlays are pure decoration. Apply `.accessibilityHidden(true)` to the outermost container, not just the inner `Image` or `CachedAsyncImage`. This includes:
+
+- `CachedAsyncImage` in list/grid cells and header overlays
+- `Color(…).overlay { CachedAsyncImage(…) }` thumbnail containers
+- `LinearGradient` overlays used for visual fade-out effects
+- `Image(systemName:)` used as a visual-only placeholder (e.g. `"photo"`, `"film"`, `"music.mic"`)
+
+`CachedAsyncImage` is always used decoratively in this codebase. Its component-level `.accessibilityHidden(true)` is already set, but the wrapping container (a `Color` or `Group`) must also be hidden whenever it is used as a thumbnail.
+
+---
+
+**ProgressView must be labelled or hidden.**
+A bare `ProgressView()` or `ProgressView(value:)` announces nothing useful to VoiceOver. Choose one:
+
+- If it conveys state already communicated by nearby text or by the parent element's label/value, hide it: `.accessibilityHidden(true)`
+- If it is the only indicator of loading activity (e.g. a standalone spinner while content loads), label it: `.accessibilityLabel("Loading…")`
+
+In-row progress bars (torrent progress, queue progress, season completion) always use `.accessibilityHidden(true)` because the percentage is available as text elsewhere in the same row.
+
+---
 
 **Compound cards collapse into a single element.**
-`PosterGridView`-style cards use `.accessibilityElement(children: .ignore)` + `.accessibilityLabel(…)` + `.accessibilityAddTraits(.isButton)` so VoiceOver reads one cohesive description instead of individual sub-views.
+List rows and grid cards that consist of multiple sub-views (icon + title + status + value) must present as one VoiceOver element, not a sequence of individually-navigable fragments. Use `.accessibilityElement(children: .ignore)` (not `.combine`) plus a hand-crafted label and value that encode all meaningful state:
 
-**State is expressed via label or value, not colour alone.**
-Monitored/unmonitored toggles, download-status badges, and similar stateful elements must include the state in their `.accessibilityLabel` or `.accessibilityValue` (e.g. `localMonitored ? "Monitored" : "Not monitored"`).
+```swift
+Button { … } label: { CardView(item: item) }
+    .accessibilityElement(children: .ignore)   // suppress child traversal
+    .accessibilityLabel(item.primaryTitle)
+    .accessibilityValue("\(item.status), \(item.isMonitored ? "monitored" : "not monitored")")
+    .accessibilityAddTraits(.isButton)
+```
+
+Avoid `.accessibilityElement(children: .combine)` for cards — it concatenates child text in unpredictable order and often includes visual-only fragments. Prefer `.ignore` with an explicit string.
+
+Calendar row views (`RadarrCalendarRow`, `SonarrCalendarRow`, `LidarrCalendarRow`) use this pattern; their labels encode title, episode/type info, and download/monitored status.
+
+---
+
+**State must be expressed via label or value, not colour alone.**
+Any element whose meaning changes based on state must communicate that state accessibly. Red/green dots, filled/unfilled icons, tinted text — none of these alone are sufficient. Include the state in:
+
+- `.accessibilityLabel(…)` — when the state defines what the element *is* (e.g. `"Monitored"` / `"Not monitored"` for a toggle button)
+- `.accessibilityValue(…)` — when the state is a property of a fixed-label element (e.g. a service row whose label is always the service name but whose value is `"Enabled"` / `"Not configured"`)
+- `.accessibilityAddTraits(.isSelected)` — for multi-select list items that toggle a selected/deselected state
+
+Status dots (the small green/grey circle in `SettingsView`) are decorative; hide them with `.accessibilityHidden(true)` and put the state in the parent button's `.accessibilityValue`.
+
+---
+
+**Selection state must be conveyed.**
+In multi-select list views, selected items must carry `.accessibilityAddTraits(.isSelected)`. The accessibility value should also include "selected" to support screen readers that may not announce the selected trait automatically.
+
+---
 
 **Dynamic Type must not break layouts.**
-Never hard-code font sizes with `.font(.system(size: N))` — use semantic styles (`.caption`, `.headline`, etc.). If a fixed size is unavoidable, pair it with `.minimumScaleFactor(0.7)` and a line-limit that allows wrapping.
+Never hard-code font sizes with `.font(.system(size: N))` — use semantic styles (`.caption`, `.headline`, etc.). If a fixed size is truly unavoidable, pair it with `.minimumScaleFactor(0.7)` and a `lineLimit` that permits wrapping.
+
+---
 
 **Hints are optional but welcome.**
-`.accessibilityHint("…")` can clarify what a non-obvious action does (e.g. "Opens the detail sheet"). Keep hints short and in the third person.
+`.accessibilityHint("…")` can clarify what a non-obvious action does. Keep hints short and in the third person ("Toggles whether this file is downloaded"). Do not duplicate information already in the label or value.
 
-### Pre-Merge Checklist
+---
 
-- [ ] Enable VoiceOver on a simulator and navigate every new/changed view — no unlabelled interactive elements
-- [ ] Run Xcode's Accessibility Inspector (`Xcode → Open Developer Tool → Accessibility Inspector`) against the simulator
-- [ ] Test with the largest Dynamic Type size (`Settings → Accessibility → Display & Text Size → Larger Text`) — no clipped or overflowing text
-- [ ] Verify colour-only states have a textual/label equivalent (no red/green-only indicators)
+### Common Mistakes in This Codebase
+
+These are the categories of issues most commonly missed. Review each when writing or reviewing view code:
+
+| Category | What to check |
+|---|---|
+| Icon-only toolbar buttons | Every `Image(systemName:)` inside a `ToolbarItem` button or `Menu` label |
+| Inline icon buttons inside rows | Search/magnify icons, priority menus, close/remove buttons on chips |
+| ProgressView in rows and headers | Must be `.accessibilityHidden(true)` unless it is the *only* loading indicator |
+| Poster/fanart/thumbnail containers | The outer `Color` or `Group` wrapper, not just the inner `CachedAsyncImage` |
+| Gradient overlays | `LinearGradient` used purely for visual fade — always hidden |
+| Queue/Wanted row buttons | Must use `.accessibilityElement(children: .ignore)` + label + value; never rely on `.combine` |
+| Calendar rows | Must use `.ignore` + explicit label; never `.combine` |
+| Status colour indicators | Small dots and filled/unfilled icons — the parent must carry the state as text |
+| ProgressView spinners | Loading spinners in section headers (albums, episodes, tracks) need a label |
+
+### Agent Pre-Submit Checklist
+
+Before finalising any commit that touches a SwiftUI view, verify each of the following. Submitting without checking these is the same as skipping compilation.
+
+- [ ] Every new button/toggle/tappable card has `.accessibilityLabel` if it has no visible text label
+- [ ] Every new `ProgressView` is either labelled or hidden
+- [ ] Every decorative image container has `.accessibilityHidden(true)` on its outermost modifier
+- [ ] Every new compound list/grid row uses `.accessibilityElement(children: .ignore)` with a hand-crafted label
+- [ ] No element communicates state via colour or icon shape alone without a textual equivalent
+- [ ] Run Xcode's Accessibility Inspector (`Xcode → Open Developer Tool → Accessibility Inspector`) against the simulator and resolve all warnings before submitting
 
 ## Swift code conventions
 

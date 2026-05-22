@@ -197,7 +197,15 @@ struct LidarrCalendarRow: View {
             Spacer(minLength: 0)
         }
         .padding(.vertical, 2)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel({
+            var parts: [String] = [album.title ?? "Unknown Album"]
+            if let artistName = album.artist?.artistName { parts.append(artistName) }
+            if let albumType = album.albumType { parts.append(albumType) }
+            if (album.statistics?.trackFileCount ?? 0) > 0 { parts.append("Downloaded") }
+            else if !album.monitored { parts.append("Unmonitored") }
+            return parts.joined(separator: ", ")
+        }())
     }
 
     @ViewBuilder

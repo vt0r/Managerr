@@ -66,6 +66,7 @@ struct ArtistDetailSheet: View {
                         } label: {
                             Image(systemName: "ellipsis.circle")
                         }
+                        .accessibilityLabel("More options")
 
                         Button("Done") { dismiss() }
                     }
@@ -111,6 +112,7 @@ struct ArtistDetailSheet: View {
                 if let url = artist.fanartURL(config: lidarrConfig) {
                     CachedAsyncImage(url: url)
                         .allowsHitTesting(false)
+                        .accessibilityHidden(true)
                 }
             }
             .clipShape(.rect(cornerRadius: 0))
@@ -121,6 +123,7 @@ struct ArtistDetailSheet: View {
                     endPoint: .bottom
                 )
                 .frame(height: 80)
+                .accessibilityHidden(true)
             }
             .overlay(alignment: .bottomLeading) {
                 HStack(alignment: .bottom, spacing: 12) {
@@ -134,6 +137,7 @@ struct ArtistDetailSheet: View {
                         }
                         .clipShape(.rect(cornerRadius: 8))
                         .shadow(radius: 4)
+                        .accessibilityHidden(true)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(artist.artistName ?? "Unknown Artist")
@@ -202,6 +206,7 @@ struct ArtistDetailSheet: View {
                 if isLoadingAlbums {
                     ProgressView()
                         .scaleEffect(0.7)
+                        .accessibilityLabel("Loading albums")
                 }
             }
             .padding(.bottom, 12)
@@ -238,6 +243,7 @@ struct ArtistDetailSheet: View {
                         }
                     }
                     .clipShape(.rect(cornerRadius: 6))
+                    .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(album.title ?? "Unknown Album")
@@ -270,6 +276,16 @@ struct ArtistDetailSheet: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(album.title ?? "Unknown Album")
+        .accessibilityLabel({
+            var parts = [album.title ?? "Unknown Album"]
+            if let date = album.releaseDate { parts.append(String(date.prefix(4))) }
+            if let stats = album.statistics,
+               let fileCount = stats.trackFileCount,
+               let totalCount = stats.totalTrackCount {
+                parts.append("\(fileCount) of \(totalCount) tracks")
+            }
+            parts.append(album.monitored ? "monitored" : "not monitored")
+            return parts.joined(separator: ", ")
+        }())
     }
 }

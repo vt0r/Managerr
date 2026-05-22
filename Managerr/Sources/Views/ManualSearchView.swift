@@ -95,10 +95,12 @@ struct ManualSearchView: View {
                     Image(systemName: "arrow.up.arrow.down")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
+                        .accessibilityLabel("Torrent")
                 } else {
                     Image(systemName: "doc.fill")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
+                        .accessibilityLabel("Usenet")
                 }
             }
 
@@ -115,6 +117,8 @@ struct ManualSearchView: View {
                         Text("\(seeders)")
                     }
                     .font(.caption)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(seeders) seeders")
                     if let leechers = release.leechers {
                         HStack(spacing: 2) {
                             Image(systemName: "arrow.down.circle.fill")
@@ -122,6 +126,8 @@ struct ManualSearchView: View {
                             Text("\(leechers)")
                         }
                         .font(.caption)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("\(leechers) leechers")
                     }
                 }
                 if let age = release.age {
@@ -153,6 +159,9 @@ struct ManualSearchView: View {
                     }
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Rejected (\(rejections.count))")
+                .accessibilityValue(expandedRejections.contains(release.guid) ? "expanded" : "collapsed")
+                .accessibilityHint("Double tap to toggle rejection reasons")
 
                 if expandedRejections.contains(release.guid) {
                     VStack(alignment: .leading, spacing: 2) {

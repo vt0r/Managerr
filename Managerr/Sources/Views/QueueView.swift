@@ -31,13 +31,16 @@ struct QueueView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     if viewModel.isLoading {
-                        ProgressView().scaleEffect(0.8)
+                        ProgressView()
+                            .scaleEffect(0.8)
+                            .accessibilityLabel("Loading")
                     } else {
                         Button {
                             Task { await viewModel.fetch(settings) }
                         } label: {
                             Image(systemName: "arrow.clockwise")
                         }
+                        .accessibilityLabel("Refresh")
                     }
                 }
             }
@@ -96,6 +99,8 @@ struct QueueView: View {
                             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(item.record.displayTitle)
+                    .accessibilityValue(item.record.status?.capitalized ?? "Unknown")
                     .contextMenu {
                         if isDelayed {
                             Button {
@@ -188,6 +193,7 @@ private struct QueueRowView: View {
 
             ProgressView(value: item.record.progressFraction)
                 .tint(progressColor)
+                .accessibilityHidden(true)
 
             HStack {
                 sizeLabel

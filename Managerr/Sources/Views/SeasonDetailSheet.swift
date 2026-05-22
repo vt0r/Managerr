@@ -106,6 +106,7 @@ struct SeasonDetailSheet: View {
                         } label: {
                             Image(systemName: "ellipsis.circle")
                         }
+                        .accessibilityLabel("Season options")
 
                         Button("Done") { dismiss() }
                     }
@@ -225,6 +226,7 @@ struct SeasonDetailSheet: View {
 
             Image(systemName: isImported ? "checkmark.circle.fill" : isDownloading ? "arrow.down.circle.fill" : "circle")
                 .foregroundStyle(isImported ? Color.green : isDownloading ? Color.orange : Color(.tertiaryLabel))
+                .accessibilityLabel(isImported ? "Downloaded" : isDownloading ? "Downloading" : "Not downloaded")
 
             Button {
                 searchingEpisode = episode
@@ -234,6 +236,7 @@ struct SeasonDetailSheet: View {
                     .padding(8)
             }
             .buttonStyle(.borderless)
+            .accessibilityLabel("Search for \(episode.title ?? "episode")")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 12)

@@ -108,6 +108,7 @@ private struct MovieLookupRow: View {
             }
             .frame(width: 44, height: 66)
             .clipShape(.rect(cornerRadius: 4))
+            .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(movie.title)
@@ -247,6 +248,7 @@ private struct SeriesLookupRow: View {
             }
             .frame(width: 44, height: 66)
             .clipShape(.rect(cornerRadius: 4))
+            .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(series.title)
@@ -387,6 +389,7 @@ private struct ArtistLookupRow: View {
             }
             .frame(width: 44, height: 44)
             .clipShape(.circle)
+            .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(artist.artistName ?? "Unknown")

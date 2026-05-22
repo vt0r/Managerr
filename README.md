@@ -81,24 +81,29 @@ No external dependencies — pure Swift, SwiftUI, and Foundation.
 
 ### Accessibility
 
-Managerr targets full VoiceOver support and Dynamic Type compatibility at the minimum, and we will continue working to support more accessibility features as time goes on. We ask all contributors to please keep the following guidelines in mind to help us maintain (or improve!) our accessibility.
+Accessibility is a core value of this project, not an afterthought. Managerr aims for full support of every iOS accessibility feature — VoiceOver, Switch Control, Voice Control, Dynamic Type, Reduce Motion, and more — and we actively work to close any gaps we find. Users who depend on these features deserve the same full experience as anyone else.
+
+We warmly welcome contributions from everyone, including those who are still learning the accessibility APIs. If your PR misses something, we will fix it up — please don't let unfamiliarity with the topic stop you from contributing. The [AGENTS.md](AGENTS.md) file has the full technical spec if you want to go deep.
 
 #### Guidelines
 
-**Every interactive element should be labelled.**
-Buttons, toggles, and tappable cards that rely on an icon or image alone need `.accessibilityLabel("…")`. Prefer concise noun/verb phrases ("Toggle monitoring", "Play trailer").
+**Label every interactive element that lacks visible text.**
+Buttons, toggles, and tappable cards that use only an icon need `.accessibilityLabel("…")`. Concise noun/verb phrases work best ("Add tracker", "Toggle monitoring").
 
-**Decorative images should be hidden.**
-Pure-decoration images (e.g. posters used as backgrounds) get `.accessibilityHidden(true)` so VoiceOver skips them.
+**Hide decorative images.**
+Poster thumbnails, fanart backgrounds, and gradient overlays are pure decoration — apply `.accessibilityHidden(true)` to their outermost container so VoiceOver skips them entirely.
 
-**Compound cards should collapse into a single element.**
-Grid cards use `.accessibilityElement(children: .ignore)` + `.accessibilityLabel(…)` + `.accessibilityAddTraits(.isButton)` so VoiceOver reads one cohesive description instead of individual sub-views.
+**Collapse compound rows into a single VoiceOver element.**
+List rows and cards that contain multiple sub-views (icon + title + status) should present as one element: `.accessibilityElement(children: .ignore)` + `.accessibilityLabel(…)` + `.accessibilityAddTraits(.isButton)`. This gives VoiceOver a single, coherent description instead of a stream of fragments.
 
-**State should be expressed via label or value, not color alone.**
-Monitored/unmonitored toggles, download-status badges, and similar stateful elements must include the state in their `.accessibilityLabel` or `.accessibilityValue` (e.g. `localMonitored ? "Monitored" : "Not monitored"`).
+**Convey state in text, not colour alone.**
+Red/green dots, filled/unfilled icons, and tinted text are invisible to VoiceOver. Include the state in `.accessibilityLabel` or `.accessibilityValue` (e.g. `monitored ? "Monitored" : "Not monitored"`).
 
-**Dynamic Type should not break layouts.**
-Use semantic font styles (`.caption`, `.headline`, etc.) rather than hard-coded sizes. If a fixed size is unavoidable, pair it with `.minimumScaleFactor(0.7)` and a line-limit that allows wrapping.
+**Label or hide every ProgressView.**
+A bare spinner announces nothing useful. Either label it (`.accessibilityLabel("Loading albums")`) or hide it (`.accessibilityHidden(true)`) when the progress percentage is conveyed elsewhere in the same row.
 
-**Hints are optional but welcome.**
-`.accessibilityHint("…")` can clarify what a non-obvious action does. Please keep hints short and in the third person ("Opens the detail sheet").
+**Use semantic font styles for Dynamic Type.**
+Prefer `.caption`, `.subheadline`, `.headline`, etc. over hard-coded point sizes. If a fixed size is unavoidable, add `.minimumScaleFactor(0.7)` so text scales down instead of clipping.
+
+**Hints are a bonus.**
+`.accessibilityHint("…")` can clarify a non-obvious action. Keep them short and in the third person ("Toggles whether this file is downloaded").

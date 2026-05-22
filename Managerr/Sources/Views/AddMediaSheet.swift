@@ -59,6 +59,7 @@ struct AddMovieSheet: View {
                         }
                     }
                     .clipShape(.rect(cornerRadius: 6))
+                    .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(movie.title)
@@ -238,6 +239,7 @@ struct AddSeriesSheet: View {
                         }
                     }
                     .clipShape(.rect(cornerRadius: 6))
+                    .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(series.title)
@@ -427,6 +429,7 @@ struct AddArtistSheet: View {
                         }
                     }
                     .clipShape(.rect(cornerRadius: 6))
+                    .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(artist.artistName ?? "Unknown")

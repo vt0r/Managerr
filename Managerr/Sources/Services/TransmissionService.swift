@@ -24,7 +24,11 @@ actor TransmissionService {
         "peersSendingToUs", "peersGettingFromUs", "hashString",
         "peers", "trackers", "trackerStats", "files", "fileStats",
         "pieceCount", "pieceSize", "creator", "comment", "isPrivate",
-        "magnetLink", "desiredAvailable", "bandwidthPriority"
+        "magnetLink", "desiredAvailable", "bandwidthPriority",
+        "speed-limit-down-enabled", "speed-limit-down",
+        "speed-limit-up-enabled", "speed-limit-up",
+        "peer-limit", "seedRatioMode", "seedRatioLimit",
+        "seedIdleMode", "seedIdleLimit", "labels", "queuePosition"
     ]
 
     private func rpcURL(_ config: ServerConfig) throws -> URL {
@@ -116,6 +120,13 @@ actor TransmissionService {
         return session
     }
 
+    func fetchSessionStats(_ config: ServerConfig) async throws -> TransmissionSessionStats {
+        let body: [String: Any] = ["method": "session-stats"]
+        let response: TransmissionSessionStatsResponse = try await rpcRequest(config, body: body)
+        guard let stats = response.arguments else { throw NetworkError.invalidResponse }
+        return stats
+    }
+
     func setAltSpeedEnabled(_ config: ServerConfig, enabled: Bool) async throws {
         let body: [String: Any] = [
             "method": "session-set",
@@ -167,6 +178,80 @@ actor TransmissionService {
         let body: [String: Any] = [
             "method": "torrent-set",
             "arguments": ["ids": [id], key: fileIndices]
+        ]
+        let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
+    func setTorrentSpeedLimitEnabled(_ config: ServerConfig, id: Int, download: Bool, enabled: Bool) async throws {
+        let key = download ? "speed-limit-down-enabled" : "speed-limit-up-enabled"
+        let body: [String: Any] = [
+            "method": "torrent-set",
+            "arguments": ["ids": [id], key: enabled]
+        ]
+        let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
+    func setTorrentSpeedLimitValue(_ config: ServerConfig, id: Int, download: Bool, limit: Int) async throws {
+        let key = download ? "speed-limit-down" : "speed-limit-up"
+        let enabledKey = download ? "speed-limit-down-enabled" : "speed-limit-up-enabled"
+        let body: [String: Any] = [
+            "method": "torrent-set",
+            "arguments": ["ids": [id], key: limit, enabledKey: true]
+        ]
+        let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
+    func setTorrentPeerLimit(_ config: ServerConfig, id: Int, limit: Int) async throws {
+        let body: [String: Any] = [
+            "method": "torrent-set",
+            "arguments": ["ids": [id], "peer-limit": limit]
+        ]
+        let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
+    func setTorrentSeedRatio(_ config: ServerConfig, id: Int, mode: Int, limit: Double) async throws {
+        let body: [String: Any] = [
+            "method": "torrent-set",
+            "arguments": ["ids": [id], "seedRatioMode": mode, "seedRatioLimit": limit]
+        ]
+        let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
+    func setTorrentSeedIdle(_ config: ServerConfig, id: Int, mode: Int, limit: Int) async throws {
+        let body: [String: Any] = [
+            "method": "torrent-set",
+            "arguments": ["ids": [id], "seedIdleMode": mode, "seedIdleLimit": limit]
+        ]
+        let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
+    func setTorrentLocation(_ config: ServerConfig, id: Int, location: String, move: Bool) async throws {
+        let body: [String: Any] = [
+            "method": "torrent-set-location",
+            "arguments": ["ids": [id], "location": location, "move": move]
+        ]
+        let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
+    func setTorrentLabels(_ config: ServerConfig, id: Int, labels: [String]) async throws {
+        let body: [String: Any] = [
+            "method": "torrent-set",
+            "arguments": ["ids": [id], "labels": labels]
+        ]
+        let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
+    func moveTorrentQueue(_ config: ServerConfig, id: Int, direction: QueueDirection) async throws {
+        let method: String
+        switch direction {
+        case .top:    method = "queue-move-top"
+        case .up:     method = "queue-move-up"
+        case .down:   method = "queue-move-down"
+        case .bottom: method = "queue-move-bottom"
+        }
+        let body: [String: Any] = [
+            "method": method,
+            "arguments": ["ids": [id]]
         ]
         let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
     }

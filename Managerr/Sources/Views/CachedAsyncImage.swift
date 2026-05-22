@@ -23,6 +23,7 @@ struct CachedAsyncImage: View {
                     .tint(.secondary)
             }
         }
+        .accessibilityHidden(true)
         .task(id: url) {
             guard let url else {
                 hasFailed = true

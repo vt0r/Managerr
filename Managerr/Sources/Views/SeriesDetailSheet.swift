@@ -115,6 +115,7 @@ struct SeriesDetailSheet: View {
                 if let url = series.fanartURL(baseURL: baseURL) {
                     CachedAsyncImage(url: url)
                         .allowsHitTesting(false)
+                        .accessibilityHidden(true)
                 }
             }
             .clipShape(.rect(cornerRadius: 0))
@@ -138,6 +139,7 @@ struct SeriesDetailSheet: View {
                         }
                         .clipShape(.rect(cornerRadius: 8))
                         .shadow(radius: 4)
+                        .accessibilityHidden(true)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(series.title)
@@ -255,6 +257,7 @@ struct SeriesDetailSheet: View {
                         if isLoadingEpisodes {
                             ProgressView()
                                 .scaleEffect(0.7)
+                                .accessibilityLabel("Loading episodes")
                         }
                     }
 
@@ -284,6 +287,7 @@ struct SeriesDetailSheet: View {
                                             if let pct = stats.percentOfEpisodes {
                                                 ProgressView(value: pct / 100)
                                                     .frame(width: 60)
+                                                    .accessibilityHidden(true)
                                             }
                                         }
 
@@ -297,7 +301,16 @@ struct SeriesDetailSheet: View {
                                     .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel(season.seasonNumber == 0 ? "Specials" : "Season \(season.seasonNumber)")
+                                .accessibilityLabel({
+                                    let seasonName = season.seasonNumber == 0 ? "Specials" : "Season \(season.seasonNumber)"
+                                    let monitoredStr = isMonitored ? "monitored" : "not monitored"
+                                    if let stats = season.statistics {
+                                        let fileCount = stats.episodeFileCount ?? 0
+                                        let total = stats.totalEpisodeCount ?? 0
+                                        return "\(seasonName), \(fileCount) of \(total) episodes, \(monitoredStr)"
+                                    }
+                                    return "\(seasonName), \(monitoredStr)"
+                                }())
 
                                 Button {
                                     localSeasonMonitored[season.seasonNumber] = !isMonitored

@@ -238,6 +238,7 @@ struct TransmissionView: View {
                 guard settings.isConfigured(.transmission) else { return }
                 let config = settings.config(for: .transmission)
                 await viewModel.fetchSession(config)
+                await viewModel.fetchSessionStats(config)
                 if viewModel.torrents.isEmpty {
                     await viewModel.fetchTorrents(config)
                 } else {
@@ -247,6 +248,7 @@ struct TransmissionView: View {
                     try? await Task.sleep(for: .seconds(5))
                     guard !Task.isCancelled else { break }
                     await viewModel.fetchTorrentsSilently(config)
+                    await viewModel.fetchSessionStats(config)
                 }
             }
             .overlay(alignment: .bottomTrailing) { addTorrentFAB }
@@ -283,21 +285,53 @@ struct TransmissionView: View {
         }
     }
 
+    @ViewBuilder
+    private var sessionStatsCard: some View {
+        if !viewModel.torrents.isEmpty || viewModel.sessionStats != nil {
+            VStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Speed")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    HStack(spacing: 16) {
+                        Label(FormatUtils.speed(viewModel.totalDownloadSpeed), systemImage: "arrow.down")
+                            .foregroundStyle(viewModel.totalDownloadSpeed > 0 ? .blue : .secondary)
+                            .accessibilityLabel("Download speed: \(FormatUtils.speed(viewModel.totalDownloadSpeed))")
+                        Spacer()
+                        Label(FormatUtils.speed(viewModel.totalUploadSpeed), systemImage: "arrow.up")
+                            .foregroundStyle(viewModel.totalUploadSpeed > 0 ? .green : .secondary)
+                            .accessibilityLabel("Upload speed: \(FormatUtils.speed(viewModel.totalUploadSpeed))")
+                    }
+                    .font(.subheadline.weight(.medium))
+                }
+                if let stats = viewModel.sessionStats?.cumulativeStats {
+                    Divider()
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("All Time")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        HStack(spacing: 16) {
+                            Label(FormatUtils.fileSize(stats.downloadedBytes ?? 0), systemImage: "arrow.down.circle")
+                                .foregroundStyle(.secondary)
+                                .accessibilityLabel("Total downloaded: \(FormatUtils.fileSize(stats.downloadedBytes ?? 0))")
+                            Spacer()
+                            Label(FormatUtils.fileSize(stats.uploadedBytes ?? 0), systemImage: "arrow.up.circle")
+                                .foregroundStyle(.secondary)
+                                .accessibilityLabel("Total uploaded: \(FormatUtils.fileSize(stats.uploadedBytes ?? 0))")
+                        }
+                        .font(.caption.weight(.medium))
+                    }
+                }
+            }
+            .padding()
+            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+        }
+    }
+
     private var torrentList: some View {
         ScrollView {
             LazyVStack(spacing: 12) {
-                if viewModel.totalDownloadSpeed > 0 || viewModel.totalUploadSpeed > 0 {
-                    HStack(spacing: 16) {
-                        Label(FormatUtils.speed(viewModel.totalDownloadSpeed), systemImage: "arrow.down")
-                            .foregroundStyle(.blue)
-                        Spacer()
-                        Label(FormatUtils.speed(viewModel.totalUploadSpeed), systemImage: "arrow.up")
-                            .foregroundStyle(.green)
-                    }
-                    .font(.subheadline.weight(.medium))
-                    .padding()
-                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
-                }
+                sessionStatsCard
 
                 if viewModel.filteredTorrents.isEmpty {
                     ContentUnavailableView("No Torrents", systemImage: "arrow.down.circle")
@@ -388,7 +422,8 @@ struct TransmissionView: View {
             }
         }
         .accessibilityLabel(torrent.name ?? "Unknown torrent")
-        .accessibilityValue(torrent.statusText)
+        .accessibilityValue(isSelected ? "\(torrent.statusText), selected" : torrent.statusText)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityAction(named: "Remove") {
             Task { await viewModel.removeTorrent(config, id: torrent.id, deleteData: false) }
         }
@@ -462,6 +497,7 @@ struct TorrentRow: View {
             HStack(spacing: 8) {
                 ProgressView(value: torrent.percentDone ?? 0)
                     .tint(statusColor)
+                    .accessibilityHidden(true)
 
                 if let onToggle {
                     Button {

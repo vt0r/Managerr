@@ -137,6 +137,7 @@ struct AlbumDetailSheet: View {
                         .blur(radius: 20)
                         .scaleEffect(1.3)
                         .allowsHitTesting(false)
+                        .accessibilityHidden(true)
                 }
             }
             .clipShape(.rect(cornerRadius: 0))
@@ -147,6 +148,7 @@ struct AlbumDetailSheet: View {
                     endPoint: .bottom
                 )
                 .frame(height: 80)
+                .accessibilityHidden(true)
             }
             .overlay(alignment: .bottomLeading) {
                 HStack(alignment: .bottom, spacing: 12) {
@@ -160,6 +162,7 @@ struct AlbumDetailSheet: View {
                         }
                         .clipShape(.rect(cornerRadius: 8))
                         .shadow(radius: 4)
+                        .accessibilityHidden(true)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(album.title ?? "Unknown Album")
@@ -297,6 +300,7 @@ struct AlbumDetailSheet: View {
                 if isLoadingTracks {
                     ProgressView()
                         .scaleEffect(0.7)
+                        .accessibilityLabel("Loading tracks")
                 }
             }
 
@@ -368,6 +372,7 @@ struct AlbumDetailSheet: View {
             Image(systemName: isImported ? "checkmark.circle.fill" : isDownloading ? "arrow.down.circle.fill" : "circle")
                 .foregroundStyle(isImported ? .green : isDownloading ? .orange : Color(.tertiaryLabel))
                 .font(.subheadline)
+                .accessibilityLabel(isImported ? "Downloaded" : isDownloading ? "Downloading" : "Not downloaded")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
