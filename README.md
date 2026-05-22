@@ -8,10 +8,10 @@ A native iOS/macOS app that brings Radarr, Sonarr, Lidarr, and Transmission toge
 
 ## Features
 
-- **Movies** — Browse your Radarr library, toggle monitoring, trigger auto or manual searches, add new movies, edit quality profile / availability / tags, and access the Radarr download queue
-- **TV Shows** — View your Sonarr series, drill into seasons and episodes, toggle monitoring per season or episode, trigger searches, edit series settings (quality, type, tags, season folders), and access the Sonarr download queue
-- **Music** — Explore artists and albums via Lidarr, monitor releases, search for missing albums, edit artist and album settings (quality, metadata profile, tags, release selection), and access the Lidarr download queue
-- **Downloads** — Monitor active Transmission torrents with live-updating per-torrent details, peers (with optional country flags), and trackers
+- **Movies** — Browse your Radarr library, toggle monitoring, trigger auto or manual searches, add new movies, edit quality profile / availability / tags, and access the Radarr activity queue
+- **TV Shows** — View your Sonarr series, drill into seasons and episodes, toggle monitoring per season or episode, trigger searches, edit series settings (quality, type, tags, season folders), and access the Sonarr activity queue
+- **Music** — Explore artists and albums via Lidarr, monitor releases, search for missing albums, edit artist and album settings (quality, metadata profile, tags, release selection), and access the Lidarr activity queue
+- **Downloads** — Monitor active Transmission torrents with live-updating per-torrent details, peers (with optional country flags), trackers, and file lists; set bandwidth priority per torrent or per individual file; toggle whether individual files are downloaded; add, edit (URL and tier), and remove trackers
 - **Settings** — Configure each service independently with built-in connection testing
 - **Open in Browser** — Each service tab has an option to open the service's web UI in your default browser - if you find yourself using this often, please [create an issue](https://github.com/vt0r/Managerr/issues/new/choose) to let us know which feature(s) is (are) missing!
 
