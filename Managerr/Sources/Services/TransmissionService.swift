@@ -109,6 +109,21 @@ actor TransmissionService {
         let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
     }
 
+    func fetchSession(_ config: ServerConfig) async throws -> TransmissionSession {
+        let body: [String: Any] = ["method": "session-get"]
+        let response: TransmissionSessionRPCResponse = try await rpcRequest(config, body: body)
+        guard let session = response.arguments else { throw NetworkError.invalidResponse }
+        return session
+    }
+
+    func setAltSpeedEnabled(_ config: ServerConfig, enabled: Bool) async throws {
+        let body: [String: Any] = [
+            "method": "session-set",
+            "arguments": ["alt-speed-enabled": enabled]
+        ]
+        let _: TransmissionSessionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
     func reannounce(_ config: ServerConfig, ids: [Int]) async throws {
         let body: [String: Any] = [
             "method": "torrent-reannounce",

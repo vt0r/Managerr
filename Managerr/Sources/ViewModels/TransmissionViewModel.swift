@@ -12,6 +12,7 @@ final class TransmissionViewModel {
     var sortAscending: Bool = false
     var detailedTorrent: TransmissionTorrent?
     var peerCountries: [String: String] = [:]
+    var altSpeedEnabled: Bool = false
 
     enum FilterStatus: String, CaseIterable {
         case all = "All"
@@ -93,6 +94,26 @@ final class TransmissionViewModel {
             errorMessage = nil
         } catch {
             // Keep last known data; don't overwrite error state on background failures
+        }
+    }
+
+    func setSortOption(_ option: SortOption) {
+        if sortOption == option { sortAscending.toggle() } else { sortOption = option }
+    }
+
+    func fetchSession(_ config: ServerConfig) async {
+        do {
+            let session = try await TransmissionService.shared.fetchSession(config)
+            altSpeedEnabled = session.altSpeedEnabled ?? false
+        } catch {}
+    }
+
+    func toggleAltSpeed(_ config: ServerConfig) async {
+        altSpeedEnabled.toggle()
+        do {
+            try await TransmissionService.shared.setAltSpeedEnabled(config, enabled: altSpeedEnabled)
+        } catch {
+            altSpeedEnabled.toggle()
         }
     }
 

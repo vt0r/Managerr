@@ -21,6 +21,121 @@ struct TransmissionView: View {
         return selectedIDs.isEmpty ? "Select Items" : "\(selectedIDs.count) Selected"
     }
 
+    private var actionsMenu: some View {
+        Menu {
+            Button {
+                withAnimation { isSelecting = true }
+            } label: {
+                Label("Select Torrents", systemImage: "checkmark.circle")
+            }
+            Divider()
+            Menu {
+                Button {
+                    Task { await viewModel.startAll(settings.config(for: .transmission)) }
+                } label: { Label("Start All", systemImage: "play.fill") }
+                Button {
+                    Task { await viewModel.stopAll(settings.config(for: .transmission)) }
+                } label: { Label("Stop All", systemImage: "stop.fill") }
+            } label: {
+                Label("Start/Stop All", systemImage: "playpause.fill")
+            }
+            Divider()
+            Button {
+                Task { await viewModel.toggleAltSpeed(settings.config(for: .transmission)) }
+            } label: {
+                Label(
+                    viewModel.altSpeedEnabled ? "Disable Turtle Mode" : "Enable Turtle Mode",
+                    systemImage: viewModel.altSpeedEnabled ? "tortoise.fill" : "tortoise"
+                )
+            }
+            if let url = settings.config(for: .transmission).baseURL {
+                Divider()
+                Button { openURL(url) } label: {
+                    Label("Open Transmission in Browser", systemImage: "safari")
+                }
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+        }
+        .accessibilityLabel("Actions")
+    }
+
+    private var selectionMenu: some View {
+        Menu {
+            Button {
+                let ids = selectedIDs
+                withAnimation { isSelecting = false; selectedIDs = [] }
+                Task { await viewModel.startSelected(settings.config(for: .transmission), ids: ids) }
+            } label: { Label("Start", systemImage: "play.fill") }
+            .disabled(selectedIDs.isEmpty)
+            Button {
+                let ids = selectedIDs
+                withAnimation { isSelecting = false; selectedIDs = [] }
+                Task { await viewModel.stopSelected(settings.config(for: .transmission), ids: ids) }
+            } label: { Label("Stop", systemImage: "stop.fill") }
+            .disabled(selectedIDs.isEmpty)
+            Divider()
+            Button(role: .destructive) { showBulkRemoveConfirm = true } label: {
+                Label("Remove…", systemImage: "trash")
+            }
+            .disabled(selectedIDs.isEmpty)
+            Button(role: .destructive) { showBulkRemoveWithDataConfirm = true } label: {
+                Label("Remove with Data…", systemImage: "trash.fill")
+            }
+            .disabled(selectedIDs.isEmpty)
+            Divider()
+            selectToggleButton
+        } label: {
+            Image(systemName: "ellipsis.circle")
+        }
+        .accessibilityLabel(selectedIDs.isEmpty ? "Actions" : "\(selectedIDs.count) Selected")
+    }
+
+    private var sortFilterMenu: some View {
+        Menu {
+            Section("Sort By") {
+                ForEach(TransmissionViewModel.SortOption.allCases, id: \.self) { option in
+                    Button { viewModel.setSortOption(option) } label: {
+                        sortOptionLabel(option)
+                    }
+                }
+            }
+            Section("Filter") {
+                ForEach(TransmissionViewModel.FilterStatus.allCases, id: \.self) { status in
+                    Button { viewModel.filterStatus = status } label: {
+                        filterStatusLabel(status)
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+        }
+        .accessibilityLabel("Sort and Filter")
+    }
+
+    @ViewBuilder
+    private var selectToggleButton: some View {
+        if selectedIDs.count == viewModel.filteredTorrents.count {
+            Button { selectedIDs = [] } label: {
+                Label("Deselect All", systemImage: "circle")
+            }
+        } else {
+            Button { selectedIDs = Set(viewModel.filteredTorrents.map(\.id)) } label: {
+                Label("Select All", systemImage: "checkmark.circle")
+            }
+        }
+    }
+
+    private var bulkRemoveTitle: String {
+        let n = selectedIDs.count
+        return "Remove \(n) torrent\(n == 1 ? "" : "s")?"
+    }
+
+    private var bulkRemoveWithDataTitle: String {
+        let n = selectedIDs.count
+        return "Remove \(n) torrent\(n == 1 ? "" : "s") and delete all data?"
+    }
+
     var body: some View {
         NavigationStack {
             Group {
@@ -46,119 +161,14 @@ struct TransmissionView: View {
                         }
                     }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Menu {
-                            Button {
-                                let ids = selectedIDs
-                                withAnimation { isSelecting = false; selectedIDs = [] }
-                                Task { await viewModel.startSelected(settings.config(for: .transmission), ids: ids) }
-                            } label: {
-                                Label("Start", systemImage: "play.fill")
-                            }
-                            .disabled(selectedIDs.isEmpty)
-                            Button {
-                                let ids = selectedIDs
-                                withAnimation { isSelecting = false; selectedIDs = [] }
-                                Task { await viewModel.stopSelected(settings.config(for: .transmission), ids: ids) }
-                            } label: {
-                                Label("Stop", systemImage: "stop.fill")
-                            }
-                            .disabled(selectedIDs.isEmpty)
-                            Divider()
-                            Button(role: .destructive) {
-                                showBulkRemoveConfirm = true
-                            } label: {
-                                Label("Remove…", systemImage: "trash")
-                            }
-                            .disabled(selectedIDs.isEmpty)
-                            Button(role: .destructive) {
-                                showBulkRemoveWithDataConfirm = true
-                            } label: {
-                                Label("Remove with Data…", systemImage: "trash.fill")
-                            }
-                            .disabled(selectedIDs.isEmpty)
-                            Divider()
-                            if selectedIDs.count == viewModel.filteredTorrents.count {
-                                Button {
-                                    selectedIDs = []
-                                } label: {
-                                    Label("Deselect All", systemImage: "circle")
-                                }
-                            } else {
-                                Button {
-                                    selectedIDs = Set(viewModel.filteredTorrents.map(\.id))
-                                } label: {
-                                    Label("Select All", systemImage: "checkmark.circle")
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                        }
-                        .accessibilityLabel(selectedIDs.isEmpty ? "Actions" : "\(selectedIDs.count) Selected")
+                        selectionMenu
                     }
                 } else {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Menu {
-                            Section("Sort By") {
-                                ForEach(TransmissionViewModel.SortOption.allCases, id: \.self) { option in
-                                    Button {
-                                        if viewModel.sortOption == option {
-                                            viewModel.sortAscending.toggle()
-                                        } else {
-                                            viewModel.sortOption = option
-                                        }
-                                    } label: {
-                                        sortOptionLabel(option)
-                                    }
-                                }
-                            }
-                            Section("Filter") {
-                                ForEach(TransmissionViewModel.FilterStatus.allCases, id: \.self) { status in
-                                    Button {
-                                        viewModel.filterStatus = status
-                                    } label: {
-                                        filterStatusLabel(status)
-                                    }
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "arrow.up.arrow.down")
-                        }
-                        .accessibilityLabel("Sort and Filter")
+                        sortFilterMenu
                     }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Menu {
-                            Button {
-                                withAnimation { isSelecting = true }
-                            } label: {
-                                Label("Select Torrents", systemImage: "checkmark.circle")
-                            }
-                            Divider()
-                            Menu {
-                                Button {
-                                    Task { await viewModel.startAll(settings.config(for: .transmission)) }
-                                } label: {
-                                    Label("Start All", systemImage: "play.fill")
-                                }
-                                Button {
-                                    Task { await viewModel.stopAll(settings.config(for: .transmission)) }
-                                } label: {
-                                    Label("Stop All", systemImage: "stop.fill")
-                                }
-                            } label: {
-                                Label("Start/Stop All", systemImage: "playpause.fill")
-                            }
-                            if let url = settings.config(for: .transmission).baseURL {
-                                Divider()
-                                Button {
-                                    openURL(url)
-                                } label: {
-                                    Label("Open Transmission in Browser", systemImage: "safari")
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                        }
-                        .accessibilityLabel("Actions")
+                        actionsMenu
                     }
                 }
             }
@@ -168,6 +178,7 @@ struct TransmissionView: View {
             .task {
                 guard settings.isConfigured(.transmission) else { return }
                 let config = settings.config(for: .transmission)
+                await viewModel.fetchSession(config)
                 if viewModel.torrents.isEmpty {
                     await viewModel.fetchTorrents(config)
                 } else {
@@ -218,7 +229,7 @@ struct TransmissionView: View {
                 Task { await viewModel.addTorrentFile(settings.config(for: .transmission), data: data) }
             }
             .confirmationDialog(
-                "Remove \(selectedIDs.count) torrent\(selectedIDs.count == 1 ? "" : "s")?",
+                bulkRemoveTitle,
                 isPresented: $showBulkRemoveConfirm,
                 titleVisibility: .visible
             ) {
@@ -232,7 +243,7 @@ struct TransmissionView: View {
                 Text("Torrent files will be kept on disk.")
             }
             .confirmationDialog(
-                "Remove \(selectedIDs.count) torrent\(selectedIDs.count == 1 ? "" : "s") and delete all data?",
+                bulkRemoveWithDataTitle,
                 isPresented: $showBulkRemoveWithDataConfirm,
                 titleVisibility: .visible
             ) {

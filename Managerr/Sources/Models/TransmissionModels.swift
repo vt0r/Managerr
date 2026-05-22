@@ -160,6 +160,23 @@ nonisolated struct CountryResponse: Codable, Sendable {
     let country: String?
 }
 
+nonisolated struct TransmissionSession: Codable, Sendable {
+    let altSpeedEnabled: Bool?
+    let altSpeedDown: Int?
+    let altSpeedUp: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case altSpeedEnabled = "alt-speed-enabled"
+        case altSpeedDown = "alt-speed-down"
+        case altSpeedUp = "alt-speed-up"
+    }
+}
+
+nonisolated struct TransmissionSessionRPCResponse: Codable, Sendable {
+    let result: String
+    let arguments: TransmissionSession?
+}
+
 // Why the `@unchecked Sendable`?
 // Because we're using the "init(from)" to check for a finite list of supported
 // types, and if we don't find one, we set `value` to "null", so this _should_
