@@ -1,6 +1,36 @@
 import Foundation
 import SwiftUI
 
+enum TorrentPriority: Int, CaseIterable, Hashable {
+    case low = -1
+    case normal = 0
+    case high = 1
+
+    var label: String {
+        switch self {
+        case .low: "Low"
+        case .normal: "Normal"
+        case .high: "High"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .low: "arrow.down.circle"
+        case .normal: "minus.circle"
+        case .high: "exclamationmark.circle"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .low: .blue
+        case .normal: Color(.label)
+        case .high: .orange
+        }
+    }
+}
+
 nonisolated struct TransmissionRPCRequest: Codable, Sendable {
     let method: String
     let arguments: [String: AnyCodable]?
@@ -52,6 +82,7 @@ nonisolated struct TransmissionTorrent: Codable, Identifiable, Sendable {
     let isPrivate: Bool?
     let magnetLink: String?
     let desiredAvailable: Int64?
+    let bandwidthPriority: Int?
 
     var statusText: String {
         switch status {

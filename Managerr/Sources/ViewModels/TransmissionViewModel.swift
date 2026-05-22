@@ -182,6 +182,33 @@ final class TransmissionViewModel {
         }
     }
 
+    func setTorrentPriority(_ config: ServerConfig, id: Int, priority: Int) async {
+        do {
+            try await TransmissionService.shared.setTorrentPriority(config, id: id, priority: priority)
+            await fetchTorrentDetail(config, id: id, showFlags: false)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func setFilePriority(_ config: ServerConfig, id: Int, fileIndices: [Int], priority: Int) async {
+        do {
+            try await TransmissionService.shared.setFilePriority(config, id: id, fileIndices: fileIndices, priority: priority)
+            await fetchTorrentDetail(config, id: id, showFlags: false)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func setFilesWanted(_ config: ServerConfig, id: Int, fileIndices: [Int], wanted: Bool) async {
+        do {
+            try await TransmissionService.shared.setFilesWanted(config, id: id, fileIndices: fileIndices, wanted: wanted)
+            await fetchTorrentDetail(config, id: id, showFlags: false)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     func reannounceTorrent(_ config: ServerConfig, id: Int) async {
         do {
             try await TransmissionService.shared.reannounce(config, ids: [id])

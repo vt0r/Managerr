@@ -24,7 +24,7 @@ actor TransmissionService {
         "peersSendingToUs", "peersGettingFromUs", "hashString",
         "peers", "trackers", "trackerStats", "files", "fileStats",
         "pieceCount", "pieceSize", "creator", "comment", "isPrivate",
-        "magnetLink", "desiredAvailable"
+        "magnetLink", "desiredAvailable", "bandwidthPriority"
     ]
 
     private func rpcURL(_ config: ServerConfig) throws -> URL {
@@ -122,6 +122,37 @@ actor TransmissionService {
             "arguments": ["alt-speed-enabled": enabled]
         ]
         let _: TransmissionSessionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
+    func setTorrentPriority(_ config: ServerConfig, id: Int, priority: Int) async throws {
+        let body: [String: Any] = [
+            "method": "torrent-set",
+            "arguments": ["ids": [id], "bandwidthPriority": priority]
+        ]
+        let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
+    func setFilePriority(_ config: ServerConfig, id: Int, fileIndices: [Int], priority: Int) async throws {
+        let key: String
+        switch priority {
+        case 1:  key = "priority-high"
+        case -1: key = "priority-low"
+        default: key = "priority-normal"
+        }
+        let body: [String: Any] = [
+            "method": "torrent-set",
+            "arguments": ["ids": [id], key: fileIndices]
+        ]
+        let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
+    }
+
+    func setFilesWanted(_ config: ServerConfig, id: Int, fileIndices: [Int], wanted: Bool) async throws {
+        let key = wanted ? "files-wanted" : "files-unwanted"
+        let body: [String: Any] = [
+            "method": "torrent-set",
+            "arguments": ["ids": [id], key: fileIndices]
+        ]
+        let _: TransmissionRPCResponse = try await rpcRequest(config, body: body)
     }
 
     func reannounce(_ config: ServerConfig, ids: [Int]) async throws {

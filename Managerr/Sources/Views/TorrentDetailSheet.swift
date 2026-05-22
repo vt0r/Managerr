@@ -46,10 +46,11 @@ struct TorrentDetailSheet: View {
                     }
 
                     if let files = detail.files, !files.isEmpty {
-                        filesSection(files)
+                        filesSection(files, fileStats: detail.fileStats ?? [])
                     }
 
                     infoSection
+                    bandwidthPrioritySection
                     actionButtons
                 }
                 .padding()
@@ -215,33 +216,81 @@ struct TorrentDetailSheet: View {
 
     // MARK: - Files
 
-    private func filesSection(_ files: [TransmissionFile]) -> some View {
+    private func filesSection(_ files: [TransmissionFile], fileStats: [TransmissionFileStats]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Files (\(files.count))")
                 .font(.headline)
 
-            ForEach(files) { file in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(fileName(file.name))
-                        .font(.caption)
-                        .lineLimit(2)
+            ForEach(Array(files.enumerated()), id: \.element.id) { index, file in
+                let stats = index < fileStats.count ? fileStats[index] : nil
+                let priority = TorrentPriority(rawValue: stats?.priority ?? 0) ?? .normal
+                let wanted = stats?.wanted ?? true
 
-                    HStack {
-                        if let length = file.length {
-                            Text(FormatUtils.fileSize(length))
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
+                HStack(alignment: .center, spacing: 8) {
+                    Button {
+                        Task {
+                            await viewModel.setFilesWanted(
+                                settings.config(for: .transmission),
+                                id: torrent.id,
+                                fileIndices: [index],
+                                wanted: !wanted
+                            )
                         }
-                        if let completed = file.bytesCompleted, let total = file.length, total > 0 {
-                            Spacer()
-                            ProgressView(value: Double(completed), total: Double(total))
-                                .frame(width: 80)
+                    } label: {
+                        Image(systemName: wanted ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(wanted ? .green : Color(.tertiaryLabel))
+                            .font(.body)
+                    }
+                    .buttonStyle(.plain)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(fileName(file.name))
+                            .font(.caption)
+                            .lineLimit(2)
+                            .foregroundStyle(wanted ? Color(.label) : .secondary)
+
+                        HStack {
+                            if let length = file.length {
+                                Text(FormatUtils.fileSize(length))
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            if let completed = file.bytesCompleted, let total = file.length, total > 0 {
+                                Spacer()
+                                ProgressView(value: Double(completed), total: Double(total))
+                                    .frame(width: 80)
+                                    .opacity(wanted ? 1 : 0.4)
+                            }
                         }
                     }
+
+                    Spacer()
+
+                    Menu {
+                        ForEach(TorrentPriority.allCases, id: \.rawValue) { p in
+                            Button {
+                                Task {
+                                    await viewModel.setFilePriority(
+                                        settings.config(for: .transmission),
+                                        id: torrent.id,
+                                        fileIndices: [index],
+                                        priority: p.rawValue
+                                    )
+                                }
+                            } label: {
+                                Label(p.label, systemImage: p.icon)
+                            }
+                        }
+                    } label: {
+                        Image(systemName: priority.icon)
+                            .font(.caption)
+                            .foregroundStyle(priority == .normal ? Color(.tertiaryLabel) : priority.color)
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.vertical, 2)
 
-                if file.id != files.last?.id {
+                if index != files.count - 1 {
                     Divider()
                 }
             }
@@ -364,6 +413,33 @@ struct TorrentDetailSheet: View {
             .buttonStyle(.bordered)
         }
         .padding(.top, 8)
+    }
+
+    // MARK: - Bandwidth Priority
+
+    private var bandwidthPrioritySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Bandwidth Priority")
+                .font(.headline)
+
+            Picker("Priority", selection: Binding(
+                get: { TorrentPriority(rawValue: detail.bandwidthPriority ?? 0) ?? .normal },
+                set: { newPriority in
+                    Task {
+                        await viewModel.setTorrentPriority(
+                            settings.config(for: .transmission),
+                            id: torrent.id,
+                            priority: newPriority.rawValue
+                        )
+                    }
+                }
+            )) {
+                ForEach(TorrentPriority.allCases, id: \.rawValue) { priority in
+                    Text(priority.label).tag(priority)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
     }
 
     // MARK: - Helpers
