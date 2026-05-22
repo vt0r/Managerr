@@ -137,59 +137,7 @@ struct TransmissionView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if !settings.isConfigured(.transmission) {
-                    notConfiguredView
-                } else if viewModel.isLoading && viewModel.torrents.isEmpty {
-                    ProgressView("Loading torrents...")
-                } else if let error = viewModel.errorMessage, viewModel.torrents.isEmpty {
-                    errorView(error)
-                } else {
-                    torrentList
-                }
-            }
-            .navigationTitle(selectionTitle)
-            .searchable(text: $viewModel.searchText, prompt: "Search torrents")
-            .autocorrectionDisabled(true)
-            .textInputAutocapitalization(.never)
-            .toolbar {
-                if isSelecting {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button("Cancel") {
-                            withAnimation { isSelecting = false; selectedIDs = [] }
-                        }
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        selectionMenu
-                    }
-                } else {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        sortFilterMenu
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        actionsMenu
-                    }
-                }
-            }
-            .refreshable {
-                await viewModel.fetchTorrents(settings.config(for: .transmission))
-            }
-            .task {
-                guard settings.isConfigured(.transmission) else { return }
-                let config = settings.config(for: .transmission)
-                await viewModel.fetchSession(config)
-                if viewModel.torrents.isEmpty {
-                    await viewModel.fetchTorrents(config)
-                } else {
-                    await viewModel.fetchTorrentsSilently(config)
-                }
-                while !Task.isCancelled {
-                    try? await Task.sleep(for: .seconds(5))
-                    guard !Task.isCancelled else { break }
-                    await viewModel.fetchTorrentsSilently(config)
-                }
-            }
+        navigationStack
             .alert("Add Magnet Link", isPresented: $showMagnetAlert) {
                 TextField("magnet:?xt=urn:btih:…", text: $magnetLink)
                     .textInputAutocapitalization(.never)
@@ -228,11 +176,7 @@ struct TransmissionView: View {
                 guard let data = try? Data(contentsOf: url) else { return }
                 Task { await viewModel.addTorrentFile(settings.config(for: .transmission), data: data) }
             }
-            .confirmationDialog(
-                bulkRemoveTitle,
-                isPresented: $showBulkRemoveConfirm,
-                titleVisibility: .visible
-            ) {
+            .confirmationDialog(bulkRemoveTitle, isPresented: $showBulkRemoveConfirm, titleVisibility: .visible) {
                 Button("Remove", role: .destructive) {
                     let ids = selectedIDs
                     withAnimation { isSelecting = false; selectedIDs = [] }
@@ -242,11 +186,7 @@ struct TransmissionView: View {
             } message: {
                 Text("Torrent files will be kept on disk.")
             }
-            .confirmationDialog(
-                bulkRemoveWithDataTitle,
-                isPresented: $showBulkRemoveWithDataConfirm,
-                titleVisibility: .visible
-            ) {
+            .confirmationDialog(bulkRemoveWithDataTitle, isPresented: $showBulkRemoveWithDataConfirm, titleVisibility: .visible) {
                 Button("Remove and Delete Data", role: .destructive) {
                     let ids = selectedIDs
                     withAnimation { isSelecting = false; selectedIDs = [] }
@@ -259,40 +199,87 @@ struct TransmissionView: View {
             .sheet(item: $selectedTorrent) { torrent in
                 TorrentDetailSheet(torrent: torrent, viewModel: viewModel)
             }
-            .overlay(alignment: .bottomTrailing) {
-                if settings.isConfigured(.transmission) && !isSelecting &&
-                   !(viewModel.isLoading && viewModel.torrents.isEmpty) &&
-                   !(viewModel.errorMessage != nil && viewModel.torrents.isEmpty) {
-                    Menu {
-                        Button {
-                            showFilePicker = true
-                        } label: {
-                            Label("Upload .torrent File", systemImage: "doc.badge.plus")
-                        }
-                        Button {
-                            showMagnetAlert = true
-                        } label: {
-                            Label("Add Magnet Link", systemImage: "link")
-                        }
-                        Button {
-                            showURLAlert = true
-                        } label: {
-                            Label("Add Torrent URL", systemImage: "globe")
-                        }
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.title2.weight(.semibold))
-                            .foregroundStyle(.white)
-                            .frame(width: 56, height: 56)
-                            .background(.tint)
-                            .clipShape(.circle)
-                            .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
-                    }
-                    .accessibilityLabel("Add Torrent")
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 20)
+    }
+
+    private var navigationStack: some View {
+        NavigationStack {
+            Group {
+                if !settings.isConfigured(.transmission) {
+                    notConfiguredView
+                } else if viewModel.isLoading && viewModel.torrents.isEmpty {
+                    ProgressView("Loading torrents...")
+                } else if let error = viewModel.errorMessage, viewModel.torrents.isEmpty {
+                    errorView(error)
+                } else {
+                    torrentList
                 }
             }
+            .navigationTitle(selectionTitle)
+            .searchable(text: $viewModel.searchText, prompt: "Search torrents")
+            .autocorrectionDisabled(true)
+            .textInputAutocapitalization(.never)
+            .toolbar {
+                if isSelecting {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Cancel") {
+                            withAnimation { isSelecting = false; selectedIDs = [] }
+                        }
+                    }
+                    ToolbarItem(placement: .topBarTrailing) { selectionMenu }
+                } else {
+                    ToolbarItem(placement: .topBarTrailing) { sortFilterMenu }
+                    ToolbarItem(placement: .topBarTrailing) { actionsMenu }
+                }
+            }
+            .refreshable {
+                await viewModel.fetchTorrents(settings.config(for: .transmission))
+            }
+            .task {
+                guard settings.isConfigured(.transmission) else { return }
+                let config = settings.config(for: .transmission)
+                await viewModel.fetchSession(config)
+                if viewModel.torrents.isEmpty {
+                    await viewModel.fetchTorrents(config)
+                } else {
+                    await viewModel.fetchTorrentsSilently(config)
+                }
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(5))
+                    guard !Task.isCancelled else { break }
+                    await viewModel.fetchTorrentsSilently(config)
+                }
+            }
+            .overlay(alignment: .bottomTrailing) { addTorrentFAB }
+        }
+    }
+
+    @ViewBuilder
+    private var addTorrentFAB: some View {
+        if settings.isConfigured(.transmission) && !isSelecting &&
+           !(viewModel.isLoading && viewModel.torrents.isEmpty) &&
+           !(viewModel.errorMessage != nil && viewModel.torrents.isEmpty) {
+            Menu {
+                Button { showFilePicker = true } label: {
+                    Label("Upload .torrent File", systemImage: "doc.badge.plus")
+                }
+                Button { showMagnetAlert = true } label: {
+                    Label("Add Magnet Link", systemImage: "link")
+                }
+                Button { showURLAlert = true } label: {
+                    Label("Add Torrent URL", systemImage: "globe")
+                }
+            } label: {
+                Image(systemName: "plus")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 56, height: 56)
+                    .background(.tint)
+                    .clipShape(.circle)
+                    .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
+            }
+            .accessibilityLabel("Add Torrent")
+            .padding(.trailing, 20)
+            .padding(.bottom, 20)
         }
     }
 
