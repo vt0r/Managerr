@@ -80,11 +80,13 @@ struct PeerRow: View {
                     Label(FormatUtils.speed(dl), systemImage: "arrow.down")
                         .font(.caption2)
                         .foregroundStyle(.blue)
+                        .accessibilityLabel("Download from peer: \(FormatUtils.speed(dl))")
                 }
                 if let ul = peer.rateToPeer, ul > 0 {
                     Label(FormatUtils.speed(ul), systemImage: "arrow.up")
                         .font(.caption2)
                         .foregroundStyle(.green)
+                        .accessibilityLabel("Upload to peer: \(FormatUtils.speed(ul))")
                 }
 
                 Spacer()
@@ -94,16 +96,19 @@ struct PeerRow: View {
                         Image(systemName: "lock.fill")
                             .font(.caption2)
                             .foregroundStyle(.green)
+                            .accessibilityLabel("Encrypted")
                     }
                     if peer.isUTP == true {
                         Text("µTP")
                             .font(.system(.caption2, design: .monospaced))
                             .foregroundStyle(.secondary)
+                            .accessibilityLabel("µTP protocol")
                     }
                     if let flags = peer.flagStr, !flags.isEmpty {
                         Text(flags)
                             .font(.system(.caption2, design: .monospaced))
                             .foregroundStyle(.tertiary)
+                            .accessibilityHidden(true)
                     }
                 }
             }

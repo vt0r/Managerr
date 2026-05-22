@@ -188,7 +188,16 @@ struct RadarrCalendarRow: View {
             Spacer(minLength: 0)
         }
         .padding(.vertical, 2)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel({
+            var parts = [movie.title]
+            if movie.inCinemas != nil { parts.append("In Cinemas") }
+            if movie.digitalRelease != nil { parts.append("Digital") }
+            if movie.physicalRelease != nil { parts.append("Physical") }
+            if movie.hasFile { parts.append("Downloaded") }
+            else if !movie.monitored { parts.append("Unmonitored") }
+            return parts.joined(separator: ", ")
+        }())
     }
 
     private var releaseTypeBadges: some View {

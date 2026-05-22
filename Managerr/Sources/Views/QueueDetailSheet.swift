@@ -86,6 +86,7 @@ struct QueueDetailSheet: View {
 
             ProgressView(value: item.record.progressFraction)
                 .tint(progressColor)
+                .accessibilityHidden(true)
 
             HStack {
                 if let size = item.record.size, size > 0 {

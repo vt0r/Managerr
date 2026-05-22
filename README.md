@@ -8,12 +8,12 @@ A native iOS/macOS app that brings Radarr, Sonarr, Lidarr, and Transmission toge
 
 ## Features
 
-- **Movies** — Browse your Radarr library, toggle monitoring, trigger auto or manual searches, add new movies, edit quality profile / availability / tags, access the Radarr activity queue, and view missing or cutoff-unmet movies in the Wanted list
-- **TV Shows** — View your Sonarr series, drill into seasons and episodes, toggle monitoring per season or episode, trigger searches, edit series settings (quality, type, tags, season folders), access the Sonarr activity queue, and view missing or cutoff-unmet episodes in the Wanted list
-- **Music** — Explore artists and albums via Lidarr, monitor releases, search for missing albums, edit artist and album settings (quality, metadata profile, tags, release selection), access the Lidarr activity queue, and view missing or cutoff-unmet albums in the Wanted list
-- **Downloads** — Monitor active Transmission torrents with live-updating per-torrent details, peers (with optional country flags), trackers, and file lists; set bandwidth priority per torrent or per individual file; toggle whether individual files are downloaded; add, edit (URL and tier), and remove trackers
-- **Settings** — Configure each service independently with built-in connection testing
-- **Open in Browser** — Each service tab has an option to open the service's web UI in your default browser - if you find yourself using this often, please [create an issue](https://github.com/vt0r/Managerr/issues/new/choose) to let us know which feature(s) is (are) missing!
+- **Movies** - Browse your Radarr library, toggle monitoring, trigger auto or manual searches, add new movies, edit quality profile / availability / tags, access the Radarr activity queue, and view missing or cutoff-unmet movies in the Wanted list
+- **TV Shows** - View your Sonarr series, drill into seasons and episodes, toggle monitoring per season or episode, trigger searches, edit series settings (quality, type, tags, season folders), access the Sonarr activity queue, and view missing or cutoff-unmet episodes in the Wanted list
+- **Music** - Explore artists and albums via Lidarr, monitor releases, search for missing albums, edit artist and album settings (quality, metadata profile, tags, release selection), access the Lidarr activity queue, and view missing or cutoff-unmet albums in the Wanted list
+- **Downloads** - Monitor active Transmission torrents with live-updating per-torrent details, peers (with optional country flags), trackers, and file lists; set bandwidth priority per torrent or per individual file; toggle whether individual files are downloaded; add, edit (URL and tier), and remove trackers
+- **Settings** - Configure each service independently with built-in connection testing
+- **Open in Browser** - Each service tab has an option to open the service's web UI in your default browser - if you find yourself using this often, please [create an issue](https://github.com/vt0r/Managerr/issues/new/choose) to let us know which feature(s) is (are) missing!
 
 ## Development and Contributing
 
@@ -29,7 +29,7 @@ If you'd like to contribute to this project, or if you just want to build and ru
   - [Lidarr](https://lidarr.audio)
   - [Transmission](https://transmissionbt.com)
 
-You can use the app with any combination of the above services — just enable the ones you have.
+You can use the app with any combination of the above services - just enable the ones you have.
 
 ### Getting Started
 
@@ -37,7 +37,7 @@ You can use the app with any combination of the above services — just enable t
 2. Select your target device or simulator and run
 3. Open the **Settings** tab in the app
 4. Tap a service, enter its URL and credentials, then tap **Test Connection** to verify
-5. Tap **Save** — the service is now live
+5. Tap **Save** - the service is now live
 
 #### Service URLs
 
@@ -77,28 +77,33 @@ Managerr/Sources/
 └── Utilities/                 # Formatters (bytes, speed, ETA, …)
 ```
 
-No external dependencies — pure Swift, SwiftUI, and Foundation.
+No external dependencies - pure Swift, SwiftUI, and Foundation.
 
 ### Accessibility
 
-Managerr targets full VoiceOver support and Dynamic Type compatibility at the minimum, and we will continue working to support more accessibility features as time goes on. We ask all contributors to please keep the following guidelines in mind to help us maintain (or improve!) our accessibility.
+Accessibility is a core value of this project, not an afterthought. Managerr aims for full support of every iOS accessibility feature - VoiceOver, Switch Control, Voice Control, Dynamic Type, Reduce Motion, and more - and we actively work to close any gaps we find. Users who depend on these features deserve the same full experience as anyone else.
+
+We warmly welcome contributions from everyone, including those who are still learning the accessibility APIs. If your PR misses something, we will fix it up - please don't let unfamiliarity with the topic stop you from contributing. The [AGENTS.md](AGENTS.md) file has the full technical spec if you want to go deep.
 
 #### Guidelines
 
-**Every interactive element should be labelled.**
-Buttons, toggles, and tappable cards that rely on an icon or image alone need `.accessibilityLabel("…")`. Prefer concise noun/verb phrases ("Toggle monitoring", "Play trailer").
+**Label every interactive element that lacks visible text.**
+Buttons, toggles, and tappable cards that use only an icon need `.accessibilityLabel("…")`. Concise noun/verb phrases work best ("Add tracker", "Toggle monitoring").
 
-**Decorative images should be hidden.**
-Pure-decoration images (e.g. posters used as backgrounds) get `.accessibilityHidden(true)` so VoiceOver skips them.
+**Hide decorative images.**
+Poster thumbnails, fanart backgrounds, and gradient overlays are pure decoration - apply `.accessibilityHidden(true)` to their outermost container so VoiceOver skips them entirely.
 
-**Compound cards should collapse into a single element.**
-Grid cards use `.accessibilityElement(children: .ignore)` + `.accessibilityLabel(…)` + `.accessibilityAddTraits(.isButton)` so VoiceOver reads one cohesive description instead of individual sub-views.
+**Collapse compound rows into a single VoiceOver element.**
+List rows and cards that contain multiple sub-views (icon + title + status) should present as one element: `.accessibilityElement(children: .ignore)` + `.accessibilityLabel(…)` + `.accessibilityAddTraits(.isButton)`. This gives VoiceOver a single, coherent description instead of a stream of fragments.
 
-**State should be expressed via label or value, not color alone.**
-Monitored/unmonitored toggles, download-status badges, and similar stateful elements must include the state in their `.accessibilityLabel` or `.accessibilityValue` (e.g. `localMonitored ? "Monitored" : "Not monitored"`).
+**Convey state in text, not colour alone.**
+Red/green dots, filled/unfilled icons, and tinted text are invisible to VoiceOver. Include the state in `.accessibilityLabel` or `.accessibilityValue` (e.g. `monitored ? "Monitored" : "Not monitored"`).
 
-**Dynamic Type should not break layouts.**
-Use semantic font styles (`.caption`, `.headline`, etc.) rather than hard-coded sizes. If a fixed size is unavoidable, pair it with `.minimumScaleFactor(0.7)` and a line-limit that allows wrapping.
+**Label or hide every ProgressView.**
+A bare spinner announces nothing useful. Either label it (`.accessibilityLabel("Loading albums")`) or hide it (`.accessibilityHidden(true)`) when the progress percentage is conveyed elsewhere in the same row.
 
-**Hints are optional but welcome.**
-`.accessibilityHint("…")` can clarify what a non-obvious action does. Please keep hints short and in the third person ("Opens the detail sheet").
+**Use semantic font styles for Dynamic Type.**
+Prefer `.caption`, `.subheadline`, `.headline`, etc. over hard-coded point sizes. If a fixed size is unavoidable, add `.minimumScaleFactor(0.7)` so text scales down instead of clipping.
+
+**Hints are a bonus.**
+`.accessibilityHint("…")` can clarify a non-obvious action. Keep them short and in the third person ("Toggles whether this file is downloaded").

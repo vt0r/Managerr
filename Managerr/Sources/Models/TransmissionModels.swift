@@ -47,7 +47,9 @@ nonisolated struct TransmissionArguments: Codable, Sendable {
     let torrents: [TransmissionTorrent]?
 }
 
-nonisolated struct TransmissionTorrent: Codable, Identifiable, Sendable {
+enum QueueDirection { case top, up, down, bottom }
+
+nonisolated struct TransmissionTorrent: Codable, Identifiable, Equatable, Sendable {
     let id: Int
     let name: String?
     let status: Int?
@@ -83,6 +85,37 @@ nonisolated struct TransmissionTorrent: Codable, Identifiable, Sendable {
     let magnetLink: String?
     let desiredAvailable: Int64?
     let bandwidthPriority: Int?
+    let speedLimitDownEnabled: Bool?
+    let speedLimitDown: Int?
+    let speedLimitUpEnabled: Bool?
+    let speedLimitUp: Int?
+    let peerLimit: Int?
+    let seedRatioMode: Int?
+    let seedRatioLimit: Double?
+    let seedIdleMode: Int?
+    let seedIdleLimit: Int?
+    let labels: [String]?
+    let queuePosition: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, status
+        case totalSize, percentDone, rateDownload, rateUpload, eta, uploadRatio
+        case errorString, error, addedDate, doneDate, downloadDir
+        case sizeWhenDone, leftUntilDone, uploadedEver, downloadedEver
+        case peersConnected, peersSendingToUs, peersGettingFromUs
+        case hashString, peers, trackers, trackerStats
+        case files, fileStats, pieceCount, pieceSize
+        case creator, comment, isPrivate, magnetLink
+        case desiredAvailable, bandwidthPriority
+        case speedLimitDownEnabled = "speed-limit-down-enabled"
+        case speedLimitDown = "speed-limit-down"
+        case speedLimitUpEnabled = "speed-limit-up-enabled"
+        case speedLimitUp = "speed-limit-up"
+        case peerLimit = "peer-limit"
+        case seedRatioMode, seedRatioLimit
+        case seedIdleMode, seedIdleLimit
+        case labels, queuePosition
+    }
 
     var statusText: String {
         switch status {
@@ -128,7 +161,7 @@ nonisolated struct TransmissionTorrent: Codable, Identifiable, Sendable {
     }
 }
 
-nonisolated struct TransmissionPeer: Codable, Identifiable, Sendable {
+nonisolated struct TransmissionPeer: Codable, Identifiable, Equatable, Sendable {
     let address: String?
     let clientName: String?
     let flagStr: String?
@@ -145,14 +178,14 @@ nonisolated struct TransmissionPeer: Codable, Identifiable, Sendable {
     var id: String { address ?? UUID().uuidString }
 }
 
-nonisolated struct TransmissionTracker: Codable, Identifiable, Sendable {
+nonisolated struct TransmissionTracker: Codable, Identifiable, Equatable, Sendable {
     let id: Int
     let announce: String?
     let scrape: String?
     let tier: Int?
 }
 
-nonisolated struct TransmissionTrackerStats: Codable, Identifiable, Sendable {
+nonisolated struct TransmissionTrackerStats: Codable, Identifiable, Equatable, Sendable {
     let id: Int
     let announce: String?
     let announceState: Int?
@@ -172,7 +205,7 @@ nonisolated struct TransmissionTrackerStats: Codable, Identifiable, Sendable {
     let tier: Int?
 }
 
-nonisolated struct TransmissionFile: Codable, Identifiable, Sendable {
+nonisolated struct TransmissionFile: Codable, Identifiable, Equatable, Sendable {
     let name: String?
     let length: Int64?
     let bytesCompleted: Int64?
@@ -180,7 +213,7 @@ nonisolated struct TransmissionFile: Codable, Identifiable, Sendable {
     var id: String { name ?? UUID().uuidString }
 }
 
-nonisolated struct TransmissionFileStats: Codable, Sendable {
+nonisolated struct TransmissionFileStats: Codable, Equatable, Sendable {
     let bytesCompleted: Int64?
     let wanted: Bool?
     let priority: Int?
@@ -195,17 +228,65 @@ nonisolated struct TransmissionSession: Codable, Sendable {
     let altSpeedEnabled: Bool?
     let altSpeedDown: Int?
     let altSpeedUp: Int?
+    let speedLimitDownEnabled: Bool?
+    let speedLimitDown: Int?
+    let speedLimitUpEnabled: Bool?
+    let speedLimitUp: Int?
+    let peerLimitPerTorrent: Int?
+    let seedRatioLimit: Double?
+    let seedRatioLimited: Bool?
+    let seedIdleLimit: Int?
+    let seedIdleLimited: Bool?
 
     enum CodingKeys: String, CodingKey {
         case altSpeedEnabled = "alt-speed-enabled"
         case altSpeedDown = "alt-speed-down"
         case altSpeedUp = "alt-speed-up"
+        case speedLimitDownEnabled = "speed-limit-down-enabled"
+        case speedLimitDown = "speed-limit-down"
+        case speedLimitUpEnabled = "speed-limit-up-enabled"
+        case speedLimitUp = "speed-limit-up"
+        case peerLimitPerTorrent = "peer-limit-per-torrent"
+        case seedRatioLimit = "seedRatioLimit"
+        case seedRatioLimited = "seedRatioLimited"
+        case seedIdleLimit = "seedIdleLimit"
+        case seedIdleLimited = "seedIdleLimited"
     }
 }
 
 nonisolated struct TransmissionSessionRPCResponse: Codable, Sendable {
     let result: String
     let arguments: TransmissionSession?
+}
+
+nonisolated struct TransmissionSessionStatsDetail: Codable, Sendable {
+    let uploadedBytes: Int64?
+    let downloadedBytes: Int64?
+    let filesAdded: Int?
+    let sessionCount: Int?
+    let secondsActive: Int?
+}
+
+nonisolated struct TransmissionSessionStats: Codable, Sendable {
+    let downloadSpeed: Int64?
+    let uploadSpeed: Int64?
+    let torrentCount: Int?
+    let activeTorrentCount: Int?
+    let pausedTorrentCount: Int?
+    let cumulativeStats: TransmissionSessionStatsDetail?
+    let currentSession: TransmissionSessionStatsDetail?
+
+    enum CodingKeys: String, CodingKey {
+        case downloadSpeed, uploadSpeed, torrentCount
+        case activeTorrentCount, pausedTorrentCount
+        case cumulativeStats = "cumulative-stats"
+        case currentSession = "current-session"
+    }
+}
+
+nonisolated struct TransmissionSessionStatsResponse: Codable, Sendable {
+    let result: String
+    let arguments: TransmissionSessionStats?
 }
 
 // Why the `@unchecked Sendable`?

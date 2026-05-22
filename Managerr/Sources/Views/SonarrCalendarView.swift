@@ -205,7 +205,16 @@ struct SonarrCalendarRow: View {
             Spacer(minLength: 0)
         }
         .padding(.vertical, 2)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel({
+            var parts: [String] = []
+            if let seriesTitle = episode.series?.title { parts.append(seriesTitle) }
+            parts.append(episodeCode)
+            if let title = episode.title { parts.append(title) }
+            if episode.hasFile { parts.append("Downloaded") }
+            else if !episode.monitored { parts.append("Unmonitored") }
+            return parts.joined(separator: ", ")
+        }())
     }
 
     @ViewBuilder

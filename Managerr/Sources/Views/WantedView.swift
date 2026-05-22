@@ -94,6 +94,18 @@ struct WantedView: View {
                             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(item.primaryTitle)
+                    .accessibilityValue({
+                        var parts: [String] = []
+                        if let secondary = item.secondaryTitle { parts.append(secondary) }
+                        if viewModel.filter == .missing {
+                            parts.append(item.isAvailable ? "Available, missing" : "Not yet released")
+                        } else {
+                            parts.append("Cutoff unmet")
+                            if let quality = item.qualityLabel { parts.append(quality) }
+                        }
+                        return parts.joined(separator: ", ")
+                    }())
                     .contextMenu {
                         Button {
                             Task { await viewModel.autoSearch(settings, item: item) }

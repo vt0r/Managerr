@@ -13,6 +13,8 @@ final class TransmissionViewModel {
     var detailedTorrent: TransmissionTorrent?
     var peerCountries: [String: String] = [:]
     var altSpeedEnabled: Bool = false
+    var session: TransmissionSession?
+    var sessionStats: TransmissionSessionStats?
 
     enum FilterStatus: String, CaseIterable {
         case all = "All"
@@ -103,8 +105,15 @@ final class TransmissionViewModel {
 
     func fetchSession(_ config: ServerConfig) async {
         do {
-            let session = try await TransmissionService.shared.fetchSession(config)
-            altSpeedEnabled = session.altSpeedEnabled ?? false
+            let s = try await TransmissionService.shared.fetchSession(config)
+            session = s
+            altSpeedEnabled = s.altSpeedEnabled ?? false
+        } catch {}
+    }
+
+    func fetchSessionStats(_ config: ServerConfig) async {
+        do {
+            sessionStats = try await TransmissionService.shared.fetchSessionStats(config)
         } catch {}
     }
 
@@ -266,6 +275,62 @@ final class TransmissionViewModel {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    func setTorrentSpeedLimitEnabled(_ config: ServerConfig, id: Int, download: Bool, enabled: Bool) async {
+        do {
+            try await TransmissionService.shared.setTorrentSpeedLimitEnabled(config, id: id, download: download, enabled: enabled)
+            await fetchTorrentDetail(config, id: id, showFlags: false)
+        } catch { errorMessage = error.localizedDescription }
+    }
+
+    func setTorrentSpeedLimitValue(_ config: ServerConfig, id: Int, download: Bool, limit: Int) async {
+        do {
+            try await TransmissionService.shared.setTorrentSpeedLimitValue(config, id: id, download: download, limit: limit)
+            await fetchTorrentDetail(config, id: id, showFlags: false)
+        } catch { errorMessage = error.localizedDescription }
+    }
+
+    func setTorrentPeerLimit(_ config: ServerConfig, id: Int, limit: Int) async {
+        do {
+            try await TransmissionService.shared.setTorrentPeerLimit(config, id: id, limit: limit)
+            await fetchTorrentDetail(config, id: id, showFlags: false)
+        } catch { errorMessage = error.localizedDescription }
+    }
+
+    func setTorrentSeedRatio(_ config: ServerConfig, id: Int, mode: Int, limit: Double) async {
+        do {
+            try await TransmissionService.shared.setTorrentSeedRatio(config, id: id, mode: mode, limit: limit)
+            await fetchTorrentDetail(config, id: id, showFlags: false)
+        } catch { errorMessage = error.localizedDescription }
+    }
+
+    func setTorrentSeedIdle(_ config: ServerConfig, id: Int, mode: Int, limit: Int) async {
+        do {
+            try await TransmissionService.shared.setTorrentSeedIdle(config, id: id, mode: mode, limit: limit)
+            await fetchTorrentDetail(config, id: id, showFlags: false)
+        } catch { errorMessage = error.localizedDescription }
+    }
+
+    func setTorrentLocation(_ config: ServerConfig, id: Int, location: String, move: Bool) async {
+        do {
+            try await TransmissionService.shared.setTorrentLocation(config, id: id, location: location, move: move)
+            await fetchTorrentDetail(config, id: id, showFlags: false)
+        } catch { errorMessage = error.localizedDescription }
+    }
+
+    func setTorrentLabels(_ config: ServerConfig, id: Int, labels: [String]) async {
+        do {
+            try await TransmissionService.shared.setTorrentLabels(config, id: id, labels: labels)
+            await fetchTorrentDetail(config, id: id, showFlags: false)
+        } catch { errorMessage = error.localizedDescription }
+    }
+
+    func moveTorrentQueue(_ config: ServerConfig, id: Int, direction: QueueDirection) async {
+        do {
+            try await TransmissionService.shared.moveTorrentQueue(config, id: id, direction: direction)
+            await fetchTorrentDetail(config, id: id, showFlags: false)
+        } catch { errorMessage = error.localizedDescription }
     }
 
     func startSelected(_ config: ServerConfig, ids: Set<Int>) async {

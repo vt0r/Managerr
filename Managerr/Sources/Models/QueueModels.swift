@@ -50,7 +50,7 @@ nonisolated struct ArrQueueRecord: Codable, Identifiable, Sendable {
             return series.title ?? title ?? "Unknown"
         }
         if let album {
-            return "\(artist?.artistName ?? "Unknown") – \(album.title ?? "Unknown")"
+            return "\(artist?.artistName ?? "Unknown") - \(album.title ?? "Unknown")"
         }
         if let artist { return artist.artistName ?? title ?? "Unknown" }
         return title ?? "Unknown"

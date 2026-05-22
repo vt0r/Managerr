@@ -79,6 +79,7 @@ struct TrackerListView: View {
                 } label: {
                     Image(systemName: "plus")
                 }
+                .accessibilityLabel("Add Tracker")
             }
         }
         .sheet(isPresented: $showAddSheet) {
@@ -160,11 +161,13 @@ struct TrackerRow: View {
                         Label("\(seeders)", systemImage: "arrow.up")
                             .font(.caption2)
                             .foregroundStyle(.green)
+                            .accessibilityLabel("\(seeders) seeders")
                     }
                     if let leechers = stats.leecherCount, leechers >= 0 {
                         Label("\(leechers)", systemImage: "arrow.down")
                             .font(.caption2)
                             .foregroundStyle(.blue)
+                            .accessibilityLabel("\(leechers) leechers")
                     }
                     if let peerCount = stats.lastAnnouncePeerCount, peerCount >= 0 {
                         Label("\(peerCount) peers", systemImage: "person.2")
@@ -177,6 +180,7 @@ struct TrackerRow: View {
                     Circle()
                         .fill(announceStateColor)
                         .frame(width: 6, height: 6)
+                        .accessibilityHidden(true)
 
                     Text(stats.lastAnnounceResult ?? "No response")
                         .font(.caption)
