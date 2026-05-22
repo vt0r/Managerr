@@ -52,7 +52,7 @@ struct RadarrView: View {
                             Label("Calendar", systemImage: "calendar")
                         }
                         Button { showQueue = true } label: {
-                            Label("Queue", systemImage: "clock.arrow.2.circlepath")
+                            Label("Activity", systemImage: "clock.arrow.2.circlepath")
                         }
                         Divider()
                         Button {

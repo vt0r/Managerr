@@ -43,14 +43,14 @@ struct QueueView: View {
                 if !anyConfigured {
                     notConfiguredView
                 } else if viewModel.isLoading && viewModel.items.isEmpty {
-                    ProgressView("Loading queue...")
+                    ProgressView("Loading activity queue...")
                 } else if viewModel.filteredItems.isEmpty && viewModel.errorMessages.isEmpty {
                     emptyView
                 } else {
                     itemList
                 }
             }
-            .navigationTitle(viewModel.limitToService == nil ? "Activity" : "Queue")
+            .navigationTitle("Activity")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     filterMenu
@@ -208,9 +208,9 @@ struct QueueView: View {
             Label("Not Configured", systemImage: "gearshape.2")
         } description: {
             if let service = viewModel.limitToService {
-                Text("Configure \(service.displayName) in Settings to view its queue.")
+                Text("Configure \(service.displayName) in Settings to view its activity queue.")
             } else {
-                Text("Configure Radarr, Sonarr, or Lidarr in Settings to view their queues.")
+                Text("Configure Radarr, Sonarr, or Lidarr in Settings to view their activity queues.")
             }
         }
     }
