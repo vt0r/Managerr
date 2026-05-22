@@ -10,6 +10,7 @@ struct SeriesDetailSheet: View {
     @State private var localMonitored: Bool
     @State private var localSeasonMonitored: [Int: Bool]
     @State private var showManualSearch: Bool = false
+    @State private var showAutoSearchConfirm: Bool = false
     @State private var episodes: [SonarrEpisode] = []
     @State private var isLoadingEpisodes: Bool = false
     @State private var selectedSeason: SonarrSeason?
@@ -191,13 +192,26 @@ struct SeriesDetailSheet: View {
             }
 
             HStack(spacing: 12) {
-                Button {
-                    showManualSearch = true
+                Menu {
+                    Button { showAutoSearchConfirm = true } label: {
+                        Label("Auto Search", systemImage: "wand.and.stars")
+                    }
+                    Button { showManualSearch = true } label: {
+                        Label("Manual Search", systemImage: "magnifyingglass")
+                    }
                 } label: {
-                    Label("Search Series", systemImage: "magnifyingglass")
+                    Label("Search", systemImage: "magnifyingglass")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
+                .alert("Search for Series?", isPresented: $showAutoSearchConfirm) {
+                    Button("Search") {
+                        Task { await viewModel.searchSeries(settings.config(for: .sonarr), seriesId: series.id) }
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Sonarr will search all configured indexers for \"\(series.title)\".")
+                }
                 .sheet(isPresented: $showManualSearch) {
                     ManualSearchView(
                         title: "Search: \(series.title)",

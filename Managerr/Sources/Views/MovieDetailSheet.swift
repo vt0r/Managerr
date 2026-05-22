@@ -9,6 +9,7 @@ struct MovieDetailSheet: View {
     @State private var showDeleteConfirmation: Bool = false
     @State private var localMonitored: Bool
     @State private var showManualSearch: Bool = false
+    @State private var showAutoSearchConfirm: Bool = false
 
     init(movie: RadarrMovie, viewModel: RadarrViewModel) {
         self.movie = movie
@@ -173,13 +174,26 @@ struct MovieDetailSheet: View {
             }
 
             HStack(spacing: 12) {
-                Button {
-                    showManualSearch = true
+                Menu {
+                    Button { showAutoSearchConfirm = true } label: {
+                        Label("Auto Search", systemImage: "wand.and.stars")
+                    }
+                    Button { showManualSearch = true } label: {
+                        Label("Manual Search", systemImage: "magnifyingglass")
+                    }
                 } label: {
                     Label("Search", systemImage: "magnifyingglass")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
+                .alert("Search for Movie?", isPresented: $showAutoSearchConfirm) {
+                    Button("Search") {
+                        Task { await viewModel.searchMovie(settings.config(for: .radarr), movieId: movie.id) }
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Radarr will search all configured indexers for \"\(movie.title)\".")
+                }
                 .sheet(isPresented: $showManualSearch) {
                     ManualSearchView(
                         title: "Search: \(movie.title)",
