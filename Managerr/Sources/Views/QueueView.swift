@@ -22,12 +22,19 @@ extension ServerConfig.ServiceType {
 
 struct QueueView: View {
     @Environment(SettingsStore.self) private var settings
-    @State private var viewModel = QueueViewModel()
+    @State private var viewModel: QueueViewModel
     @State private var selectedItem: ArrQueueItem?
     @State private var removingItem: ArrQueueItem?
 
+    init(service: ServerConfig.ServiceType? = nil) {
+        _viewModel = State(initialValue: QueueViewModel(limitToService: service))
+    }
+
     private var anyConfigured: Bool {
-        settings.isConfigured(.radarr) || settings.isConfigured(.sonarr) || settings.isConfigured(.lidarr)
+        if let service = viewModel.limitToService {
+            return settings.isConfigured(service)
+        }
+        return settings.isConfigured(.radarr) || settings.isConfigured(.sonarr) || settings.isConfigured(.lidarr)
     }
 
     var body: some View {
@@ -43,7 +50,7 @@ struct QueueView: View {
                     itemList
                 }
             }
-            .navigationTitle("Activity")
+            .navigationTitle(viewModel.limitToService == nil ? "Activity" : "Queue")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     filterMenu
@@ -77,20 +84,21 @@ struct QueueView: View {
 
     private var filterMenu: some View {
         Menu {
-            Picker("Service", selection: $viewModel.serviceFilter) {
-                Text("All Services").tag(Optional<ServerConfig.ServiceType>.none)
-                if settings.isConfigured(.radarr) {
-                    Text("Radarr").tag(Optional<ServerConfig.ServiceType>.some(.radarr))
+            if viewModel.limitToService == nil {
+                Picker("Service", selection: $viewModel.serviceFilter) {
+                    Text("All Services").tag(Optional<ServerConfig.ServiceType>.none)
+                    if settings.isConfigured(.radarr) {
+                        Text("Radarr").tag(Optional<ServerConfig.ServiceType>.some(.radarr))
+                    }
+                    if settings.isConfigured(.sonarr) {
+                        Text("Sonarr").tag(Optional<ServerConfig.ServiceType>.some(.sonarr))
+                    }
+                    if settings.isConfigured(.lidarr) {
+                        Text("Lidarr").tag(Optional<ServerConfig.ServiceType>.some(.lidarr))
+                    }
                 }
-                if settings.isConfigured(.sonarr) {
-                    Text("Sonarr").tag(Optional<ServerConfig.ServiceType>.some(.sonarr))
-                }
-                if settings.isConfigured(.lidarr) {
-                    Text("Lidarr").tag(Optional<ServerConfig.ServiceType>.some(.lidarr))
-                }
+                Divider()
             }
-
-            Divider()
 
             Picker("Status", selection: $viewModel.statusFilter) {
                 ForEach(QueueStatusFilter.allCases) { filter in
@@ -197,9 +205,13 @@ struct QueueView: View {
 
     private var notConfiguredView: some View {
         ContentUnavailableView {
-            Label("No Services Configured", systemImage: "gearshape.2")
+            Label("Not Configured", systemImage: "gearshape.2")
         } description: {
-            Text("Configure Radarr, Sonarr, or Lidarr in Settings to view their queues.")
+            if let service = viewModel.limitToService {
+                Text("Configure \(service.displayName) in Settings to view its queue.")
+            } else {
+                Text("Configure Radarr, Sonarr, or Lidarr in Settings to view their queues.")
+            }
         }
     }
 }

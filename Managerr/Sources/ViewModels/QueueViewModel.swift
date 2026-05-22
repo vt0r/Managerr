@@ -17,11 +17,17 @@ struct ArrQueueItem: Identifiable, Sendable {
 @MainActor
 @Observable
 final class QueueViewModel {
+    let limitToService: ServerConfig.ServiceType?
+
     var items: [ArrQueueItem] = []
     var isLoading = false
     var errorMessages: [ServerConfig.ServiceType: String] = [:]
     var serviceFilter: ServerConfig.ServiceType? = nil
     var statusFilter: QueueStatusFilter = .all
+
+    init(limitToService: ServerConfig.ServiceType? = nil) {
+        self.limitToService = limitToService
+    }
 
     var filteredItems: [ArrQueueItem] {
         items.filter { item in
@@ -42,7 +48,9 @@ final class QueueViewModel {
         }
     }
 
-    var isFiltered: Bool { serviceFilter != nil || statusFilter != .all }
+    var isFiltered: Bool {
+        (limitToService == nil && serviceFilter != nil) || statusFilter != .all
+    }
 
     func fetch(_ settings: SettingsStore) async {
         isLoading = true
@@ -50,7 +58,11 @@ final class QueueViewModel {
         var errors: [ServerConfig.ServiceType: String] = [:]
 
         await withTaskGroup(of: (ServerConfig.ServiceType, [ArrQueueRecord], String?).self) { group in
-            if settings.isConfigured(.radarr) {
+            let fetchRadarr = limitToService == nil || limitToService == .radarr
+            let fetchSonarr = limitToService == nil || limitToService == .sonarr
+            let fetchLidarr = limitToService == nil || limitToService == .lidarr
+
+            if fetchRadarr && settings.isConfigured(.radarr) {
                 group.addTask {
                     do {
                         let records = try await ArrService.shared.fetchRadarrQueue(settings.config(for: .radarr))
@@ -60,7 +72,7 @@ final class QueueViewModel {
                     }
                 }
             }
-            if settings.isConfigured(.sonarr) {
+            if fetchSonarr && settings.isConfigured(.sonarr) {
                 group.addTask {
                     do {
                         let records = try await ArrService.shared.fetchSonarrQueue(settings.config(for: .sonarr))
@@ -70,7 +82,7 @@ final class QueueViewModel {
                     }
                 }
             }
-            if settings.isConfigured(.lidarr) {
+            if fetchLidarr && settings.isConfigured(.lidarr) {
                 group.addTask {
                     do {
                         let records = try await ArrService.shared.fetchLidarrQueue(settings.config(for: .lidarr))

@@ -8,6 +8,7 @@ struct RadarrView: View {
     @State private var selectedMovie: RadarrMovie?
     @State private var showAddSheet = false
     @State private var showCalendar = false
+    @State private var showQueue = false
 
     private var isRefreshing: Bool { viewModel.isLoading && !viewModel.movies.isEmpty }
 
@@ -50,6 +51,9 @@ struct RadarrView: View {
                         Button { showCalendar = true } label: {
                             Label("Calendar", systemImage: "calendar")
                         }
+                        Button { showQueue = true } label: {
+                            Label("Queue", systemImage: "clock.arrow.2.circlepath")
+                        }
                         Divider()
                         Button {
                             Task { await viewModel.fetchMovies(settings.config(for: .radarr)) }
@@ -85,6 +89,9 @@ struct RadarrView: View {
             }
             .sheet(isPresented: $showCalendar) {
                 RadarrCalendarView()
+            }
+            .sheet(isPresented: $showQueue) {
+                QueueView(service: .radarr)
             }
             .sheet(isPresented: $showAddSheet) {
                 MovieLookupView(onAdded: {

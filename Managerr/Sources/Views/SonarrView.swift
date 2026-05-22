@@ -8,6 +8,7 @@ struct SonarrView: View {
     @State private var selectedSeries: SonarrSeries?
     @State private var showAddSheet = false
     @State private var showCalendar = false
+    @State private var showQueue = false
 
     private var isRefreshing: Bool { viewModel.isLoading && !viewModel.series.isEmpty }
 
@@ -50,6 +51,9 @@ struct SonarrView: View {
                         Button { showCalendar = true } label: {
                             Label("Calendar", systemImage: "calendar")
                         }
+                        Button { showQueue = true } label: {
+                            Label("Queue", systemImage: "clock.arrow.2.circlepath")
+                        }
                         Divider()
                         Button {
                             Task { await viewModel.fetchSeries(settings.config(for: .sonarr)) }
@@ -85,6 +89,9 @@ struct SonarrView: View {
             }
             .sheet(isPresented: $showCalendar) {
                 SonarrCalendarView()
+            }
+            .sheet(isPresented: $showQueue) {
+                QueueView(service: .sonarr)
             }
             .sheet(isPresented: $showAddSheet) {
                 SeriesLookupView(onAdded: {
