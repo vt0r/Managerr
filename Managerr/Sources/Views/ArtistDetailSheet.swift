@@ -8,6 +8,8 @@ struct ArtistDetailSheet: View {
 
     @State private var showDeleteConfirmation: Bool = false
     @State private var showEditSheet: Bool = false
+    @State private var showAutoSearchConfirm: Bool = false
+    @State private var showManualSearch: Bool = false
     @State private var localMonitored: Bool
     @State private var artistAlbums: [LidarrAlbum] = []
     @State private var isLoadingAlbums: Bool = false
@@ -194,6 +196,38 @@ struct ArtistDetailSheet: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             }
+
+            HStack(spacing: 12) {
+                Button { showAutoSearchConfirm = true } label: {
+                    Label("Auto Search", systemImage: "wand.and.stars").frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .alert("Search for Artist?", isPresented: $showAutoSearchConfirm) {
+                    Button("Search") {
+                        Task { await viewModel.searchArtist(lidarrConfig, artistId: artist.id) }
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Lidarr will search all configured indexers for \"\(artist.artistName ?? "this artist")\".")
+                }
+
+                Button { showManualSearch = true } label: {
+                    Label("Manual Search", systemImage: "magnifyingglass").frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .sheet(isPresented: $showManualSearch) {
+                    ManualSearchView(
+                        title: "Search: \(artist.artistName ?? "Artist")",
+                        fetchReleases: {
+                            try await ArrService.shared.fetchLidarrArtistReleases(lidarrConfig, artistId: artist.id)
+                        },
+                        grabRelease: { release in
+                            try await ArrService.shared.grabLidarrRelease(lidarrConfig, guid: release.guid, indexerId: release.indexerId)
+                        }
+                    )
+                }
+            }
+            .padding(.top, 8)
         }
         .padding()
     }
@@ -206,7 +240,7 @@ struct ArtistDetailSheet: View {
                 if isLoadingAlbums {
                     ProgressView()
                         .scaleEffect(0.7)
-                        .accessibilityLabel("Loading albums")
+                        .accessibilityHidden(true)
                 }
             }
             .padding(.bottom, 12)

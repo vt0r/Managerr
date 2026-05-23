@@ -389,6 +389,11 @@ nonisolated final class ArrService: Sendable {
         return try await network.request(url: url, headers: headers(for: config))
     }
 
+    func fetchLidarrArtistReleases(_ config: ServerConfig, artistId: Int) async throws -> [ArrRelease] {
+        let url = try makeURL(config, path: "/api/v1/release", queryItems: [URLQueryItem(name: "artistId", value: String(artistId))])
+        return try await network.request(url: url, headers: headers(for: config))
+    }
+
     func grabRadarrRelease(_ config: ServerConfig, guid: String, indexerId: Int) async throws {
         let url = try makeURL(config, path: "/api/v3/release")
         let body = try JSONEncoder().encode(ReleaseGrabRequest(guid: guid, indexerId: indexerId))
