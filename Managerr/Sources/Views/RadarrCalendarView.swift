@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RadarrCalendarView: View {
     @Environment(SettingsStore.self) private var settings
+    @Environment(\.dismiss) private var dismiss
     @State private var weekStart: Date = Self.currentWeekStart()
     @State private var monthItems: [RadarrMovie] = []
     @State private var isLoading = false
@@ -92,6 +93,9 @@ struct RadarrCalendarView: View {
             .navigationTitle("Calendar")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Done") { dismiss() }
+                }
                 ToolbarItem(placement: .topBarTrailing) { filterMenu }
             }
             .task(id: fetchKey) { await fetch() }

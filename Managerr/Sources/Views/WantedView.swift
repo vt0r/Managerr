@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WantedView: View {
     @Environment(SettingsStore.self) private var settings
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel: WantedViewModel
     @State private var selectedItem: WantedItem?
 
@@ -26,6 +27,9 @@ struct WantedView: View {
             .navigationTitle("Wanted")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Done") { dismiss() }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     filterMenu
                 }

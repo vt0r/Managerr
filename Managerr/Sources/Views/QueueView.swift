@@ -3,6 +3,7 @@ import SwiftUI
 
 struct QueueView: View {
     @Environment(SettingsStore.self) private var settings
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel: QueueViewModel
     @State private var selectedItem: ArrQueueItem?
     @State private var removingItem: ArrQueueItem?
@@ -26,6 +27,9 @@ struct QueueView: View {
             }
             .navigationTitle("Activity")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Done") { dismiss() }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     filterMenu
                 }
