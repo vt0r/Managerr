@@ -61,7 +61,7 @@ struct CalendarMonthGridView: View {
 
     private var weekdayHeader: some View {
         HStack(spacing: 0) {
-            ForEach(Self.weekdayLabels, id: \.self) { label in
+            ForEach(Array(Self.weekdayLabels.enumerated()), id: \.offset) { _, label in
                 Text(label)
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(.secondary)
